@@ -1,0 +1,53 @@
+package client
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/sendgrid/rest"
+
+	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
+)
+
+// CreateDelta creates a new Deployment Delta for the orgID and appID.
+// The Deployment Delta will be added with the provided content of modules and the 'env_id' and 'name' properties of the 'metadata' property.
+func (api *apiClient) CreateDelta(ctx context.Context, orgID, appID string, delta *humanitec.CreateDeploymentDeltaRequest) (*humanitec.DeploymentDelta, error) {
+	data, err := json.Marshal(delta)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling payload into JSON: %w", err)
+	}
+
+	apiPath := fmt.Sprintf("/orgs/%s/apps/%s/deltas", orgID, appID)
+	req := rest.Request{
+		Method:  http.MethodPost,
+		BaseURL: api.baseUrl + apiPath,
+		Headers: map[string]string{
+			"Authorization": "Bearer " + api.token,
+			"Content-Type":  "application/json",
+			"Accept":        "application/json",
+		},
+		Body: data,
+	}
+
+	resp, err := api.client.SendWithContext(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("humanitec api: %s %s: %w", req.Method, req.BaseURL, err)
+	}
+
+	switch resp.StatusCode {
+
+	case http.StatusOK, http.StatusCreated:
+		{
+			var res humanitec.DeploymentDelta
+			if err = json.Unmarshal([]byte(resp.Body), &res); err != nil {
+				return nil, fmt.Errorf("humanitec api: %s %s: parsing response: %w", req.Method, req.BaseURL, err)
+			}
+			return &res, nil
+		}
+
+	default:
+		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
+	}
+}
