@@ -2,6 +2,7 @@ package humanitec
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -47,7 +48,11 @@ func (r resourcesMap) mapVar(ref string) string {
 					envVar = fmt.Sprintf("%s.%s.%s", scope, resName, propName)
 				}
 				return fmt.Sprintf("${%s}", envVar)
+			} else {
+				log.Printf("Warning: Can not resolve '%s'. Property '%s' is not declared for '%s'.", ref, propName, resName)
 			}
+		} else {
+			log.Printf("Warning: Can not resolve '%s'. Resource '%s' is not declared.", ref, resName)
 		}
 	}
 
