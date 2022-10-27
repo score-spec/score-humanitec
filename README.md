@@ -95,7 +95,7 @@ score-humanitec run -f ./score.yaml --env test-env
 - Enable application centric rather than infrastructure centric development.
 - Abstract away infrastructural complexity without sacrificing transparency.
 
-For more information, see the [Score manifesto](https://score.dev/).
+For more information, see the [Score manifesto](https://score.dev/manifesto).
 
 ## ![Get involved](docs/images/get-involved.svg) Get involved
 
