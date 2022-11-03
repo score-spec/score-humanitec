@@ -1,0 +1,7 @@
+apiVersion: humanitec.org/v1b1
+
+resources:
+  db:
+    scope: external
+  dns:
+    scope: shared
