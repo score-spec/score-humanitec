@@ -1,0 +1,9 @@
+apiVersion: humanitec.org/v1b1
+
+service:
+  routes:
+    http:
+      "/":
+        type: prefix
+        from: ${resources.dns}
+        port: 80
