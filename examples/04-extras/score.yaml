@@ -1,0 +1,26 @@
+apiVersion: score.sh/v1b1
+
+metadata:
+  name: web-app
+
+service:
+  ports:
+    www:
+      port: 80
+
+containers:
+  web-app:
+    image: nginx
+    files:
+      - target: /usr/share/nginx/html/index.html
+        mode: "644"
+        content: ["${resources.env.MESSAGE}"]
+
+resources:
+  env:
+    type: environment
+    properties:
+      MESSAGE:
+        type: string
+  dns:
+    type: dns
