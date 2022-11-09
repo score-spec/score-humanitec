@@ -69,18 +69,6 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
             "type": "dns"
           }
         },
-        "ingress": {
-          "rules": {
-            "externals.dns": {
-              "http": {
-                "/": {
-                  "port": 80,
-                  "type": "prefix"
-                }
-              }
-            }
-          }
-        },
         "profile": "humanitec/default-module",
         "spec": {
           "containers": {
@@ -91,8 +79,20 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
                   "value": "${values.MESSAGE}"
                 }
               },
-              "id": "web-app",
+              "id": "hello",
               "image": "nginx"
+            }
+          },
+          "ingress": {
+            "rules": {
+              "externals.dns": {
+                "http": {
+                  "/": {
+                    "port": 80,
+                    "type": "prefix"
+                  }
+                }
+              }
             }
           },
           "service": {

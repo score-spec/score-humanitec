@@ -189,6 +189,27 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 		}
 	}
 
+	if ext != nil && len(ext.Service.Routes) > 0 {
+		var rules = map[string]interface{}{}
+		for proto, pRoutes := range ext.Service.Routes {
+			for path, rSpec := range pRoutes {
+				var from = resourceRefRegex.ReplaceAllString(rSpec.From, "externals.$1")
+				var proto = strings.ToLower(proto)
+				rules[from] = map[string]interface{}{
+					proto: map[string]interface{}{
+						path: map[string]interface{}{
+							"port": rSpec.Port,
+							"type": rSpec.Type,
+						},
+					},
+				}
+			}
+		}
+		workloadSpec["ingress"] = map[string]interface{}{
+			"rules": rules,
+		}
+	}
+
 	var workload = map[string]interface{}{
 		"profile": "humanitec/default-module",
 		"spec":    workloadSpec,
@@ -206,27 +227,6 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 	}
 	if len(externals) > 0 {
 		workload["externals"] = externals
-	}
-
-	if ext != nil && len(ext.Service.Routes) > 0 {
-		var rules = map[string]interface{}{}
-		for proto, pRoutes := range ext.Service.Routes {
-			for path, rSpec := range pRoutes {
-				var from = resourceRefRegex.ReplaceAllString(rSpec.From, "externals.$1")
-				var proto = strings.ToLower(proto)
-				rules[from] = map[string]interface{}{
-					proto: map[string]interface{}{
-						path: map[string]interface{}{
-							"port": rSpec.Port,
-							"type": rSpec.Type,
-						},
-					},
-				}
-			}
-		}
-		workload["ingress"] = map[string]interface{}{
-			"rules": rules,
-		}
 	}
 
 	var shared []humanitec.UpdateAction
