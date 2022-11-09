@@ -1,6 +1,9 @@
 # VS Code workspace configuration
 .vscode/
 
+# Goland workspace configuration
+.idea/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
