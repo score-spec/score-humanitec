@@ -274,6 +274,18 @@ func TestScoreConvert(t *testing.T) {
 										},
 									},
 								},
+								"ingress": map[string]interface{}{
+									"rules": map[string]interface{}{
+										"externals.dns": map[string]interface{}{
+											"http": map[string]interface{}{
+												"/": map[string]interface{}{
+													"port": 8080,
+													"type": "prefix",
+												},
+											},
+										},
+									},
+								},
 							},
 							"externals": map[string]interface{}{
 								"data": map[string]interface{}{
@@ -281,18 +293,6 @@ func TestScoreConvert(t *testing.T) {
 								},
 								"db": map[string]interface{}{
 									"type": "postgres",
-								},
-							},
-							"ingress": map[string]interface{}{
-								"rules": map[string]interface{}{
-									"externals.dns": map[string]interface{}{
-										"http": map[string]interface{}{
-											"/": map[string]interface{}{
-												"port": 8080,
-												"type": "prefix",
-											},
-										},
-									},
 								},
 							},
 						},
