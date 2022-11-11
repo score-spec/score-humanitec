@@ -23,32 +23,32 @@ import (
 )
 
 func init() {
-	draftCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
-	draftCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
-	draftCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
-	draftCmd.Flags().StringVar(&apiUrl, "url", apiUrlDefault, "Humanitec API endpoint")
-	draftCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
-	draftCmd.MarkFlagRequired("token")
-	draftCmd.Flags().StringVar(&orgID, "org", "", "Organization ID")
-	draftCmd.MarkFlagRequired("org")
-	draftCmd.Flags().StringVar(&appID, "app", "", "Application ID")
-	draftCmd.MarkFlagRequired("app")
-	draftCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
-	draftCmd.MarkFlagRequired("env")
+	deltaCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
+	deltaCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
+	deltaCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
+	deltaCmd.Flags().StringVar(&apiUrl, "url", apiUrlDefault, "Humanitec API endpoint")
+	deltaCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
+	deltaCmd.MarkFlagRequired("token")
+	deltaCmd.Flags().StringVar(&orgID, "org", "", "Organization ID")
+	deltaCmd.MarkFlagRequired("org")
+	deltaCmd.Flags().StringVar(&appID, "app", "", "Application ID")
+	deltaCmd.MarkFlagRequired("app")
+	deltaCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
+	deltaCmd.MarkFlagRequired("env")
 
-	draftCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new draft deployment at the end")
-	draftCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
+	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")
+	deltaCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
 
-	rootCmd.AddCommand(draftCmd)
+	rootCmd.AddCommand(deltaCmd)
 }
 
-var draftCmd = &cobra.Command{
-	Use:   "draft",
-	Short: "Creates Humanitec deployment draft from the source SCORE file",
-	RunE:  draft,
+var deltaCmd = &cobra.Command{
+	Use:   "delta",
+	Short: "Creates Humanitec deployment delta from the source SCORE file",
+	RunE:  delta,
 }
 
-func draft(cmd *cobra.Command, args []string) error {
+func delta(cmd *cobra.Command, args []string) error {
 	if !verbose {
 		log.SetOutput(io.Discard)
 	}
