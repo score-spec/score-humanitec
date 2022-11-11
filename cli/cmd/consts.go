@@ -12,6 +12,7 @@ const (
 	overridesFileDefault  = "./overrides.score.yaml"
 	extensionsFileDefault = "./humanitec.score.yaml"
 	apiUrlDefault         = "https://api.humanitec.io"
+	uiUrlDefault          = "https://app.humanitec.io"
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 	overridesFile  string
 	extensionsFile string
 	apiUrl         string
+	uiUrl          string
 	apiToken       string
 	orgID          string
 	appID          string

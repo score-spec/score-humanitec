@@ -27,6 +27,7 @@ func init() {
 	deltaCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
 	deltaCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
 	deltaCmd.Flags().StringVar(&apiUrl, "url", apiUrlDefault, "Humanitec API endpoint")
+	deltaCmd.Flags().StringVar(&uiUrl, "ui", uiUrlDefault, "Humanitec UI")
 	deltaCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
 	deltaCmd.MarkFlagRequired("token")
 	deltaCmd.Flags().StringVar(&orgID, "org", "", "Organization ID")
@@ -79,7 +80,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	res.Metadata.Url = fmt.Sprintf("%s/orgs/%s/apps/%s/envs/%s/draft/%s", apiUrl, orgID, appID, delta.Metadata.EnvID, res.ID)
+	res.Metadata.Url = fmt.Sprintf("%s/orgs/%s/apps/%s/envs/%s/draft/%s", uiUrl, orgID, appID, delta.Metadata.EnvID, res.ID)
 
 	// Output resulting deployment delta
 	//
