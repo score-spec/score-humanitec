@@ -88,14 +88,14 @@ score-humanitec run -f ./score.yaml --env test-env
 ## ![Get involved](docs/images/get-involved.svg) Get involved
 
 - Give the project a star!
-- Contact us via Email:
+- Contact us via email:
   - team@score.dev
   - abuse@score.dev
 - See our [documentation](https://docs.score.dev).
 
 ## ![Contributing](docs/images/contributing.svg) Contributing
 
-<!-- - Write a [blog](score.dev/blog). -->
+- Write a [blog](https://score.dev/blog).
 - Provide feedback on our [road map and releases board](https://github.com/orgs/score-spec/projects).
 - Contribute.
 

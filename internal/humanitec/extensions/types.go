@@ -10,14 +10,15 @@ package extensions
 // HumanitecExtensionsSpec is a set of extra definitions supported by Humanitec.
 //
 // YAML example:
-//  apiVersion: humanitec.org/v1b1
-//  service:
-//    routes:
-//      http:
-//        "/":
-//          from: ${resources.dns}
-//          type: prefix
-//          port: 80
+//
+//	apiVersion: humanitec.org/v1b1
+//	service:
+//	  routes:
+//	    http:
+//	      "/":
+//	        from: ${resources.dns}
+//	        type: prefix
+//	        port: 80
 type HumanitecExtensionsSpec struct {
 	ApiVersion string                  `mapstructure:"apiVersion"`
 	Service    HumanitecServiceSpec    `mapstructure:"service"`
