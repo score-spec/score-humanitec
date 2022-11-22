@@ -22,5 +22,7 @@ resources:
     properties:
       MESSAGE:
         type: string
+      DATADOG_ENV:
+        type: string
   dns:
     type: dns
