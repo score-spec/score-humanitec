@@ -8,17 +8,6 @@ The Apache Software Foundation (http://www.apache.org/).
 package cmd
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
-
-	"github.com/score-spec/score-humanitec/internal/humanitec"
-	api "github.com/score-spec/score-humanitec/internal/humanitec_go/client"
-	ht "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -50,58 +39,5 @@ var draftCmd = &cobra.Command{
 }
 
 func draft(cmd *cobra.Command, args []string) error {
-	if !verbose {
-		log.SetOutput(io.Discard)
-	}
-
-	// Load SCORE spec and extensions
-	//
-	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile)
-	if err != nil {
-		return err
-	}
-
-	// Prepare a new deployment
-	//
-	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec("Auto-generated (SCORE)", envID, spec, ext)
-	if err != nil {
-		return fmt.Errorf("preparing new deployment: %w", err)
-	}
-
-	// Create a new deployment delta
-	//
-	log.Print("Creating a new deployment delta...\n")
-	client, err := api.NewClient(apiUrl, apiToken, http.DefaultClient)
-	if err != nil {
-		return err
-	}
-	res, err := client.CreateDelta(context.Background(), orgID, appID, delta)
-	if err != nil {
-		return err
-	}
-	res.Metadata.Url = fmt.Sprintf("%s/orgs/%s/apps/%s/envs/%s/draft/%s", uiUrl, orgID, appID, delta.Metadata.EnvID, res.ID)
-
-	// Output resulting deployment delta
-	//
-	tmp, err := json.MarshalIndent(res, "", "  ")
-	if err != nil {
-		return err
-	}
-	os.Stdout.Write(tmp)
-
-	// Trigger the deployment (optional)
-	//
-	if deploy {
-		log.Printf("Starting a new deployment for delta '%s'...\n", res.ID)
-		_, err := client.StartDeployment(context.Background(), orgID, appID, envID, &ht.StartDeploymentRequest{
-			DeltaID: res.ID,
-			Comment: "Auto-deployment (SCORE)",
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return delta(cmd, args)
 }
