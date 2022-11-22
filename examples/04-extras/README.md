@@ -16,7 +16,7 @@ service:
       port: 80
 
 containers:
-  hello:
+  web-app:
     image: nginx
     files:
       - target: /usr/share/nginx/html/index.html
@@ -29,6 +29,8 @@ resources:
     properties:
       MESSAGE:
         type: string
+      DATADOG_ENV:
+        type: string
   dns:
     type: dns
 ```
@@ -38,13 +40,17 @@ This example also uses an extensions file, called `humanitec.yaml`, that contain
 ```yaml
 apiVersion: humanitec.org/v1b1
 
-service:
-  routes:
-    http:
-      "/":
-        type: prefix
-        from: ${resources.dns}
-        port: 80
+profile: "humanitec/default-module"
+spec:
+  "labels":
+    "tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}"
+  "ingress":
+    rules:
+      "${resources.dns}":
+        http:
+          "/":
+            type: prefix
+            port: 80
 ```
 
 To prepare a new Humanitec deployment delta from this `score.yaml` file, use `score-humanitec` CLI tool:
@@ -72,14 +78,14 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
         "profile": "humanitec/default-module",
         "spec": {
           "containers": {
-            "hello": {
+            "web-app": {
               "files": {
                 "/usr/share/nginx/html/index.html": {
                   "mode": "644",
                   "value": "${values.MESSAGE}"
                 }
               },
-              "id": "hello",
+              "id": "web-app",
               "image": "nginx"
             }
           },
@@ -94,6 +100,9 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
                 }
               }
             }
+          },
+          "labels": {
+            "tags.datadoghq.com/env": "${values.DATADOG_ENV}"
           },
           "service": {
             "ports": {

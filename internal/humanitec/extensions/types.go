@@ -12,35 +12,27 @@ package extensions
 // YAML example:
 //
 //	apiVersion: humanitec.org/v1b1
-//	service:
-//	  routes:
-//	    http:
-//	      "/":
-//	        from: ${resources.dns}
-//	        type: prefix
-//	        port: 80
+//	profile: "humanitec/default-module"
+//	spec:
+//	  "labels":
+//	    "tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}"
+//	  "ingress":
+//	    rules:
+//	      "${resources.dns}":
+//	        http:
+//	          "/":
+//	            type: prefix
+//	            port: 80
+//	resources:
+//	  db:
+//	    scope: external
+//	  dns:
+//	    scope: shared
 type HumanitecExtensionsSpec struct {
 	ApiVersion string                  `mapstructure:"apiVersion"`
-	Service    HumanitecServiceSpec    `mapstructure:"service"`
+	Profile    string                  `mapstructure:"profile"`
+	Spec       map[string]interface{}  `mapstructure:"spec"`
 	Resources  HumanitecResourcesSpecs `mapstructure:"resources"`
-}
-
-// HumanitecServiceSpec is a workload service specification.
-type HumanitecServiceSpec struct {
-	Routes HumanitecServiceRoutesSpecs `mapstructure:"routes"`
-}
-
-// HumanitecServiceRoutesSpecs is a map of service routes specifications for each network protocol.
-type HumanitecServiceRoutesSpecs map[string]HumanitecServiceRoutePathsSpec
-
-// HumanitecServiceRoutePathsSpec is a map of service routes specifications for each path.
-type HumanitecServiceRoutePathsSpec map[string]HumanitecServiceRoutePathSpec
-
-// HumanitecServiceRoutePathSpec is a service route specification for a single path.
-type HumanitecServiceRoutePathSpec struct {
-	From string `mapstructure:"from"`
-	Type string `mapstructure:"type"`
-	Port int    `mapstructure:"port"`
 }
 
 // HumanitecResourcesSpecs is a map of workload resources specifications.

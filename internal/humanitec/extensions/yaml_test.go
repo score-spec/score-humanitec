@@ -41,29 +41,40 @@ func TestYamlDecode(t *testing.T) {
 ---
 apiVersion: humanitec.org/v1b1
 
-service:
-  routes:
-    http:
-      "/":
-        type: prefix
-        from: ${resources.dns}
-        port: 80
+profile: "test-org/test-module"
+spec:
+  "labels":
+    "tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}"
+  "ingress":
+    rules:
+      "${resources.dns}":
+        http:
+          "/":
+            type: prefix
+            port: 80
 
 resources:
-    db:
-        scope: external
-    dns:
-        scope: shared
+  db:
+    scope: external
+  dns:
+    scope: shared
 `)),
 			Output: HumanitecExtensionsSpec{
 				ApiVersion: "humanitec.org/v1b1",
-				Service: HumanitecServiceSpec{
-					Routes: HumanitecServiceRoutesSpecs{
-						"http": HumanitecServiceRoutePathsSpec{
-							"/": HumanitecServiceRoutePathSpec{
-								From: "${resources.dns}",
-								Type: "prefix",
-								Port: 80,
+				Profile:    "test-org/test-module",
+				Spec: map[string]interface{}{
+					"labels": map[string]interface{}{
+						"tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}",
+					},
+					"ingress": map[string]interface{}{
+						"rules": map[string]interface{}{
+							"${resources.dns}": map[string]interface{}{
+								"http": map[string]interface{}{
+									"/": map[string]interface{}{
+										"type": "prefix",
+										"port": 80,
+									},
+								},
 							},
 						},
 					},

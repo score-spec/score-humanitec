@@ -1,9 +1,13 @@
 apiVersion: humanitec.org/v1b1
 
-service:
-  routes:
-    http:
-      "/":
-        type: prefix
-        from: ${resources.dns}
-        port: 80
+profile: "humanitec/default-module"
+spec:
+  "labels":
+    "tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}"
+  "ingress":
+    rules:
+      "${resources.dns}":
+        http:
+          "/":
+            type: prefix
+            port: 80

@@ -8,6 +8,7 @@ The Apache Software Foundation (http://www.apache.org/).
 package humanitec
 
 import (
+	"os"
 	"testing"
 
 	score "github.com/score-spec/score-go/types"
@@ -15,6 +16,106 @@ import (
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMapVar(t *testing.T) {
+	var res = resourcesMap{
+		Spec: map[string]score.ResourceSpec{
+			"env": {
+				Type: "environment",
+				Properties: map[string]score.ResourcePropertySpec{
+					"DEBUG": {},
+				},
+			},
+			"db": {
+				Type: "posgres",
+				Properties: map[string]score.ResourcePropertySpec{
+					"name": {},
+				},
+			},
+			"dns": {
+				Type: "dns",
+				Properties: map[string]score.ResourcePropertySpec{
+					"domain": {},
+				},
+			},
+			"service-b": {
+				Type: "workload",
+				Properties: map[string]score.ResourcePropertySpec{
+					"name": {},
+				},
+			},
+		},
+		Meta: extensions.HumanitecResourcesSpecs{
+			"dns": extensions.HumanitecResourceSpec{Scope: "shared"},
+		},
+	}
+
+	assert.Equal(t, "", os.Expand("", res.mapVar))
+	assert.Equal(t, "${bad.reference}", os.Expand("${bad.reference}", res.mapVar))
+	assert.Equal(t, "${escaped.sequence}", os.Expand("$${escaped.sequence}", res.mapVar))
+
+	assert.Equal(t, "${values.DEBUG}", os.Expand("${resources.env.DEBUG}", res.mapVar))
+	assert.Equal(t, "shared.dns", os.Expand("${resources.dns}", res.mapVar))
+	assert.Equal(t, "${externals.db.name}", os.Expand("${resources.db.name}", res.mapVar))
+	assert.Equal(t, "${shared.dns.domain}", os.Expand("${resources.dns.domain}", res.mapVar))
+	assert.Equal(t, "${modules.service-b.name}", os.Expand("${resources.service-b.name}", res.mapVar))
+}
+
+func TestMapAllVars(t *testing.T) {
+	var res = resourcesMap{
+		Spec: map[string]score.ResourceSpec{
+			"env": {
+				Type: "environment",
+				Properties: map[string]score.ResourcePropertySpec{
+					"DEBUG": {},
+				},
+			},
+			"db": {
+				Type: "posgres",
+				Properties: map[string]score.ResourcePropertySpec{
+					"name": {},
+				},
+			},
+			"dns": {
+				Type: "dns",
+				Properties: map[string]score.ResourcePropertySpec{
+					"domain": {},
+				},
+			},
+			"service-b": {
+				Type: "workload",
+				Properties: map[string]score.ResourcePropertySpec{
+					"name": {},
+				},
+			},
+		},
+		Meta: extensions.HumanitecResourcesSpecs{
+			"dns": extensions.HumanitecResourceSpec{Scope: "shared"},
+		},
+	}
+
+	var source = map[string]interface{}{
+		"api": map[string]interface{}{
+			"${resources.service-b.name}": map[string]interface{}{
+				"url":  "http://${resources.dns.domain}",
+				"port": 80,
+			},
+		},
+		"DEBUG": "${resources.env.DEBUG}",
+	}
+
+	var expected = map[string]interface{}{
+		"api": map[string]interface{}{
+			"${modules.service-b.name}": map[string]interface{}{
+				"url":  "http://${shared.dns.domain}",
+				"port": 80,
+			},
+		},
+		"DEBUG": "${values.DEBUG}",
+	}
+
+	assert.Equal(t, expected, res.mapAllVars(source))
+}
 
 func TestScoreConvert(t *testing.T) {
 	const (
@@ -193,7 +294,8 @@ func TestScoreConvert(t *testing.T) {
 					"env": {
 						Type: "environment",
 						Properties: map[string]score.ResourcePropertySpec{
-							"DEBUG": {Default: false, Required: false},
+							"DEBUG":       {Default: false, Required: false},
+							"DATADOG_ENV": {},
 						},
 					},
 					"dns": {
@@ -225,13 +327,20 @@ func TestScoreConvert(t *testing.T) {
 				},
 			},
 			Extensions: &extensions.HumanitecExtensionsSpec{
-				Service: extensions.HumanitecServiceSpec{
-					Routes: extensions.HumanitecServiceRoutesSpecs{
-						"HTTP": extensions.HumanitecServiceRoutePathsSpec{
-							"/": extensions.HumanitecServiceRoutePathSpec{
-								From: "${resources.dns}",
-								Type: "prefix",
-								Port: 8080,
+				Profile: "test-org/test-module",
+				Spec: map[string]interface{}{
+					"labels": map[string]interface{}{
+						"tags.datadoghq.com/env": "${resources.env.DATADOG_ENV}",
+					},
+					"ingress": map[string]interface{}{
+						"rules": map[string]interface{}{
+							"${resources.dns}": map[string]interface{}{
+								"http": map[string]interface{}{
+									"/": map[string]interface{}{
+										"type": "prefix",
+										"port": 80,
+									},
+								},
 							},
 						},
 					},
@@ -247,7 +356,7 @@ func TestScoreConvert(t *testing.T) {
 				Modules: humanitec.ModuleDeltas{
 					Add: map[string]map[string]interface{}{
 						"test": {
-							"profile": "humanitec/default-module",
+							"profile": "test-org/test-module",
 							"spec": map[string]interface{}{
 								"containers": map[string]interface{}{
 									"backend": map[string]interface{}{
@@ -276,15 +385,18 @@ func TestScoreConvert(t *testing.T) {
 								},
 								"ingress": map[string]interface{}{
 									"rules": map[string]interface{}{
-										"externals.dns": map[string]interface{}{
+										"shared.dns": map[string]interface{}{
 											"http": map[string]interface{}{
 												"/": map[string]interface{}{
-													"port": 8080,
 													"type": "prefix",
+													"port": 80,
 												},
 											},
 										},
 									},
+								},
+								"labels": map[string]interface{}{
+									"tags.datadoghq.com/env": "${values.DATADOG_ENV}",
 								},
 							},
 							"externals": map[string]interface{}{
