@@ -19,8 +19,8 @@ var (
 	scoreFile      string
 	overridesFile  string
 	extensionsFile string
-	apiUrl         string
 	uiUrl          string
+	apiUrl         string
 	apiToken       string
 	orgID          string
 	appID          string
