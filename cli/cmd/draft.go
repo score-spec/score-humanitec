@@ -26,7 +26,8 @@ func init() {
 	draftCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
 	draftCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
 	draftCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
-	draftCmd.Flags().StringVar(&apiUrl, "url", apiUrlDefault, "Humanitec API endpoint")
+	draftCmd.Flags().StringVar(&uiUrl, "ui-url", uiUrlDefault, "Humanitec API endpoint")
+	draftCmd.Flags().StringVar(&apiUrl, "api-url", apiUrlDefault, "Humanitec API endpoint")
 	draftCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
 	draftCmd.MarkFlagRequired("token")
 	draftCmd.Flags().StringVar(&orgID, "org", "", "Organization ID")
@@ -44,7 +45,7 @@ func init() {
 
 var draftCmd = &cobra.Command{
 	Use:   "draft",
-	Short: "Creates Humanitec deployment draft from the source SCORE file",
+	Short: "DEPRECATED - use 'delta' instead - creates Humanitec deployment draft from the source SCORE file",
 	RunE:  draft,
 }
 
@@ -79,7 +80,7 @@ func draft(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	res.Metadata.Url = fmt.Sprintf("%s/orgs/%s/apps/%s/envs/%s/draft/%s", apiUrl, orgID, appID, delta.Metadata.EnvID, res.ID)
+	res.Metadata.Url = fmt.Sprintf("%s/orgs/%s/apps/%s/envs/%s/draft/%s", uiUrl, orgID, appID, delta.Metadata.EnvID, res.ID)
 
 	// Output resulting deployment delta
 	//
