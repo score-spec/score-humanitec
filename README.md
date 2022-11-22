@@ -85,29 +85,17 @@ The Score specification file resolves configuration inconsistencies between envi
 score-humanitec run -f ./score.yaml --env test-env
 ```
 
-## ![Manifesto](docs/images/manifesto.svg) Score manifesto
-
-- Enable local development without risk of configuration inconsistencies in remote environments.
-- Offer default configuration while allowing for a large degree of customization.
-- Establish a single source of truth for application configuration.
-- Separate environment specific from environment agnostic configuration.
-- Enable environment agnostic declaration of infrastructure dependencies.
-- Enable application centric rather than infrastructure centric development.
-- Abstract away infrastructural complexity without sacrificing transparency.
-
-For more information, see the [Score manifesto](https://score.dev/manifesto).
-
 ## ![Get involved](docs/images/get-involved.svg) Get involved
 
 - Give the project a star!
-- Contact us via Email:
+- Contact us via email:
   - team@score.dev
   - abuse@score.dev
 - See our [documentation](https://docs.score.dev).
 
 ## ![Contributing](docs/images/contributing.svg) Contributing
 
-<!-- - Write a [blog](score.dev/blog). -->
+- Write a [blog](https://score.dev/blog).
 - Provide feedback on our [road map and releases board](https://github.com/orgs/score-spec/projects).
 - Contribute.
 
