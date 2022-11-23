@@ -2,11 +2,9 @@
 
 # ![Score](docs/images/logo.svg) Score overview
 
-_Score_ provides a developer-centric and platform-agnostic workload specification to improve developer productivity and experience. Score eliminates configuration inconsistencies between local and remote environments.
+Score aims to improve developer producticity and experience by reducing the risk of configurtaion inconsistencies between local and remote environments. It provides developer-centric workload specification (`score.yaml`) which captures a workloads runtime requirements in a platform-agnostic manner.
 
-The _Score implementation CLI_ is a conversion tool for application developers to generate an environment specific configuration. In combination with environment specific parameters, The Platform CLI tool can run your Workload in the target environment by generating the target platform's configuration file.
-
-Learn more [here](https://github.com/score-spec/spec#-what-is-score).
+The `score.yaml` specification file can be executed against a _Score Implementation CLI_, a conversion tool for application developers to generate environment specific configuration. In combination with environment specific parameters, the CLI tool can run your workload in the target environment by generating a platform-specific configuration file such as `docker-compose.yaml` or a Helm `values.yaml`. Learn more [here](https://github.com/score-spec/spec#-what-is-score).
 
 ## ![Installation](docs/images/install.svg) Installation
 
@@ -21,9 +19,9 @@ If you already have a `score.yaml` file defined, you can simply run the followin
 score-humanitec run -f ./score.yaml --env test-env
 ```
 
-- run tells the CLI to translate the Score file to a Humanitec deployment delta.
-- -f is the path to the Score file.
-- --env specifies the environment ID.
+- `run` tells the CLI to translate the Score file to a Humanitec deployment delta.
+- `-f` is the path to the Score file.
+- `--env` specifies the environment ID.
 
 If you're just getting started, follow [this guide](https://docs.score.dev/docs/get-started/score-humanitec-hello-world/) to run your first Hello World program with `score-humanitec`.
 
