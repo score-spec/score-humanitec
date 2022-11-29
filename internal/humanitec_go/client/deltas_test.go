@@ -41,7 +41,7 @@ func TestCreateDelta(t *testing.T) {
 		{
 			Name: "Should return new Deployment Delta",
 			Data: &humanitec.CreateDeploymentDeltaRequest{
-				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test draft"},
+				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test delta"},
 				Modules: humanitec.ModuleDeltas{
 					Add: map[string]map[string]interface{}{
 						"module-01": {"image": "busybox"},
@@ -51,14 +51,14 @@ func TestCreateDelta(t *testing.T) {
 			StatusCode: http.StatusOK,
 			Response: []byte(`{
 				"id": "qwe...rty",
-				"metadata": { "env_id": "test", "name": "Test draft" },
+				"metadata": { "env_id": "test", "name": "Test delta" },
 				"modules": { 
 					"add": { "module-01": { "image": "busybox" } }
 				}
 			}`),
 			ExpectedResult: &humanitec.DeploymentDelta{
 				ID:       "qwe...rty",
-				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test draft"},
+				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test delta"},
 				Modules: humanitec.ModuleDeltas{
 					Add: map[string]map[string]interface{}{
 						"module-01": {"image": "busybox"},

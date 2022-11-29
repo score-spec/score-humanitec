@@ -19,7 +19,7 @@ import (
 func TestScoreConvert(t *testing.T) {
 	const (
 		envID = "test"
-		name  = "Test draft"
+		name  = "Test delta"
 	)
 
 	var tests = []struct {
