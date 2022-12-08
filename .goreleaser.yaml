@@ -5,7 +5,7 @@ before:
 builds:
   - id: score-humanitec
     binary: score-humanitec
-    main: ./cli
+    main: ./cmd/score-humanitec
     ldflags:
       - -X github.com/score-spec/score-humanitec/internal/version.Version={{ .Version }}
       - -X github.com/score-spec/score-humanitec/internal/version.BuildTime={{ .CommitDate }}
