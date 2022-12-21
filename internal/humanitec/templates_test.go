@@ -149,7 +149,7 @@ func TestSubstitute(t *testing.T) {
 		context.Substitute("postgresql://${resources.db.user}:${resources.db.password}@${resources.db.host}:${resources.db.port}/${resources.db.name}"))
 }
 
-func TestMapAllVars(t *testing.T) {
+func TestSubstituteAll(t *testing.T) {
 	var context = templatesContext{
 		"metadata.name": "test-name",
 
