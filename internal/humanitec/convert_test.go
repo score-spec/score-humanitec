@@ -8,7 +8,6 @@ The Apache Software Foundation (http://www.apache.org/).
 package humanitec
 
 import (
-	"os"
 	"testing"
 
 	score "github.com/score-spec/score-go/types"
@@ -16,106 +15,6 @@ import (
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMapVar(t *testing.T) {
-	var res = resourcesMap{
-		Spec: map[string]score.ResourceSpec{
-			"env": {
-				Type: "environment",
-				Properties: map[string]score.ResourcePropertySpec{
-					"DEBUG": {},
-				},
-			},
-			"db": {
-				Type: "posgres",
-				Properties: map[string]score.ResourcePropertySpec{
-					"name": {},
-				},
-			},
-			"dns": {
-				Type: "dns",
-				Properties: map[string]score.ResourcePropertySpec{
-					"domain": {},
-				},
-			},
-			"service-b": {
-				Type: "workload",
-				Properties: map[string]score.ResourcePropertySpec{
-					"name": {},
-				},
-			},
-		},
-		Meta: extensions.HumanitecResourcesSpecs{
-			"dns": extensions.HumanitecResourceSpec{Scope: "shared"},
-		},
-	}
-
-	assert.Equal(t, "", os.Expand("", res.mapVar))
-	assert.Equal(t, "${bad.reference}", os.Expand("${bad.reference}", res.mapVar))
-	assert.Equal(t, "${escaped.sequence}", os.Expand("$${escaped.sequence}", res.mapVar))
-
-	assert.Equal(t, "${values.DEBUG}", os.Expand("${resources.env.DEBUG}", res.mapVar))
-	assert.Equal(t, "shared.dns", os.Expand("${resources.dns}", res.mapVar))
-	assert.Equal(t, "${externals.db.name}", os.Expand("${resources.db.name}", res.mapVar))
-	assert.Equal(t, "${shared.dns.domain}", os.Expand("${resources.dns.domain}", res.mapVar))
-	assert.Equal(t, "${modules.service-b.name}", os.Expand("${resources.service-b.name}", res.mapVar))
-}
-
-func TestMapAllVars(t *testing.T) {
-	var res = resourcesMap{
-		Spec: map[string]score.ResourceSpec{
-			"env": {
-				Type: "environment",
-				Properties: map[string]score.ResourcePropertySpec{
-					"DEBUG": {},
-				},
-			},
-			"db": {
-				Type: "posgres",
-				Properties: map[string]score.ResourcePropertySpec{
-					"name": {},
-				},
-			},
-			"dns": {
-				Type: "dns",
-				Properties: map[string]score.ResourcePropertySpec{
-					"domain": {},
-				},
-			},
-			"service-b": {
-				Type: "workload",
-				Properties: map[string]score.ResourcePropertySpec{
-					"name": {},
-				},
-			},
-		},
-		Meta: extensions.HumanitecResourcesSpecs{
-			"dns": extensions.HumanitecResourceSpec{Scope: "shared"},
-		},
-	}
-
-	var source = map[string]interface{}{
-		"api": map[string]interface{}{
-			"${resources.service-b.name}": map[string]interface{}{
-				"url":  "http://${resources.dns.domain}",
-				"port": 80,
-			},
-		},
-		"DEBUG": "${resources.env.DEBUG}",
-	}
-
-	var expected = map[string]interface{}{
-		"api": map[string]interface{}{
-			"${modules.service-b.name}": map[string]interface{}{
-				"url":  "http://${shared.dns.domain}",
-				"port": 80,
-			},
-		},
-		"DEBUG": "${values.DEBUG}",
-	}
-
-	assert.Equal(t, expected, res.mapAllVars(source))
-}
 
 func TestScoreConvert(t *testing.T) {
 	const (
