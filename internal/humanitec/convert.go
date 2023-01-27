@@ -160,7 +160,7 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 	var externals = map[string]interface{}{}
 	for name, res := range spec.Resources {
 		if meta, exists := ext.Resources[name]; !exists || meta.Scope == "" || meta.Scope == "external" {
-			if res.Type != "workload" && res.Type != "environment" {
+			if res.Type != "service" && res.Type != "environment" {
 				externals[name] = map[string]interface{}{
 					"type": res.Type,
 				}
