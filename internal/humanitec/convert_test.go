@@ -165,7 +165,7 @@ func TestScoreConvert(t *testing.T) {
 						Variables: map[string]string{
 							"DEBUG":             "${resources.env.DEBUG}",
 							"LOGS_LEVEL":        "${pod.debug.level}",
-							"ORDERS_SERVICE":    "http://${resources.orders.service.name}:${resources.orders.service.port}/api",
+							"ORDERS_SERVICE":    "http://${resources.orders.name}:${resources.orders.port}/api",
 							"CONNECTION_STRING": "postgresql://${resources.db.host}:${resources.db.port}/${resources.db.name}",
 							"DOMAIN_NAME":       "${resources.dns.domain}",
 						},
@@ -217,10 +217,10 @@ func TestScoreConvert(t *testing.T) {
 						},
 					},
 					"orders": {
-						Type: "workload",
+						Type: "service",
 						Properties: map[string]score.ResourcePropertySpec{
-							"service.name": {Required: false},
-							"service.port": {},
+							"name": {Required: false},
+							"port": {},
 						},
 					},
 				},

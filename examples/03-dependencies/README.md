@@ -38,9 +38,10 @@ resources:
     properties:
       domain:
   backend:
-    type: workload
+    type: service
     properties:
       name:
+      port:
 ```
 
 This example also uses an extensions file, called `humanitec.yaml`, that contains additional hints for `score-humanitec` CLI tool. This information would help the CLI tool to resolve the resources properly.

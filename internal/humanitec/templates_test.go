@@ -43,9 +43,10 @@ func TestBuildContext(t *testing.T) {
 			},
 		},
 		"service-a": score.ResourceSpec{
-			Type: "workload",
+			Type: "service",
 			Properties: map[string]score.ResourcePropertySpec{
-				"service.name": {},
+				"name": {},
+				"port": {},
 			},
 		},
 	}
@@ -71,8 +72,9 @@ func TestBuildContext(t *testing.T) {
 		"resources.dns":        "shared.dns",
 		"resources.dns.domain": "${shared.dns.domain}",
 
-		"resources.service-a":              "modules.service-a",
-		"resources.service-a.service.name": "${modules.service-a.service.name}",
+		"resources.service-a":      "modules.service-a",
+		"resources.service-a.name": "${modules.service-a.service.name}",
+		"resources.service-a.port": "${modules.service-a.service.port}",
 	}, context)
 }
 
@@ -91,8 +93,9 @@ func TestMapVar(t *testing.T) {
 		"resources.dns":        "shared.dns",
 		"resources.dns.domain": "${shared.dns.domain}",
 
-		"resources.service-a":              "modules.service-a",
-		"resources.service-a.service.name": "${modules.service-a.service.name}",
+		"resources.service-a":      "modules.service-a",
+		"resources.service-a.name": "${modules.service-a.service.name}",
+		"resources.service-a.port": "${modules.service-a.service.port}",
 	}
 
 	assert.Equal(t, "", context.mapVar(""))
@@ -110,6 +113,8 @@ func TestMapVar(t *testing.T) {
 	assert.Equal(t, "${externals.db.name}", context.mapVar("resources.db.name"))
 	assert.Equal(t, "${resources.db.name.nil}", context.mapVar("resources.db.name.nil"))
 	assert.Equal(t, "${resources.db.nil}", context.mapVar("resources.db.nil"))
+	assert.Equal(t, "${modules.service-a.service.name}", context.mapVar("resources.service-a.name"))
+	assert.Equal(t, "${modules.service-a.service.port}", context.mapVar("resources.service-a.port"))
 	assert.Equal(t, "${resources.nil}", context.mapVar("resources.nil"))
 	assert.Equal(t, "${nil.db.name}", context.mapVar("nil.db.name"))
 }
@@ -129,8 +134,9 @@ func TestSubstitute(t *testing.T) {
 		"resources.dns":        "shared.dns",
 		"resources.dns.domain": "${shared.dns.domain}",
 
-		"resources.service-a":              "modules.service-a",
-		"resources.service-a.service.name": "${modules.service-a.service.name}",
+		"resources.service-a":      "modules.service-a",
+		"resources.service-a.name": "${modules.service-a.service.name}",
+		"resources.service-a.port": "${modules.service-a.service.port}",
 	}
 
 	assert.Equal(t, "", context.Substitute(""))
@@ -164,15 +170,17 @@ func TestSubstituteAll(t *testing.T) {
 		"resources.dns":        "shared.dns",
 		"resources.dns.domain": "${shared.dns.domain}",
 
-		"resources.service-a":              "modules.service-a",
-		"resources.service-a.service.name": "${modules.service-a.service.name}",
+		"resources.service-a":      "modules.service-a",
+		"resources.service-a.name": "${modules.service-a.service.name}",
+		"resources.service-a.port": "${modules.service-a.service.port}",
 	}
 
 	var source = map[string]interface{}{
 		"api": map[string]interface{}{
-			"${resources.service-a.service.name}": map[string]interface{}{
-				"url":  "http://${resources.dns.domain}",
-				"port": 80,
+			"${resources.service-a.name}": map[string]interface{}{
+				"url":   "http://${resources.dns.domain}",
+				"port":  "${resources.service-a.port}",
+				"retry": 10,
 			},
 		},
 		"DEBUG": "${resources.env.DEBUG}",
@@ -181,8 +189,9 @@ func TestSubstituteAll(t *testing.T) {
 	var expected = map[string]interface{}{
 		"api": map[string]interface{}{
 			"${modules.service-a.service.name}": map[string]interface{}{
-				"url":  "http://${shared.dns.domain}",
-				"port": 80,
+				"url":   "http://${shared.dns.domain}",
+				"port":  "${modules.service-a.service.port}",
+				"retry": 10,
 			},
 		},
 		"DEBUG": "${values.DEBUG}",
