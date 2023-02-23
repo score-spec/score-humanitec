@@ -50,6 +50,9 @@ func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, e
 		case "service":
 			source = fmt.Sprintf("modules.%s", resName)
 		default:
+			if res.Type == "workload" {
+				log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
+			}
 			if resExt, exists := ext[resName]; exists && resExt.Scope == "shared" {
 				source = fmt.Sprintf("shared.%s", resName)
 			} else {
