@@ -26,5 +26,5 @@ type Client interface {
 
 	// Deployments
 	//
-	StartDeployment(ctx context.Context, orgID, appID, envID string, deployment *humanitec.StartDeploymentRequest) (*humanitec.Deployment, error)
+	StartDeployment(ctx context.Context, orgID, appID, envID string, retry bool, deployment *humanitec.StartDeploymentRequest) (*humanitec.Deployment, error)
 }

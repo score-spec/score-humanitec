@@ -27,5 +27,6 @@ var (
 	envID          string
 
 	deploy  bool
+	retry   bool
 	verbose bool
 )

@@ -12,14 +12,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/sendgrid/rest"
 
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 )
 
+var (
+	retryDelay = 5 * time.Second
+)
+
 // StartDeployment starts a new Deployment.
-func (api *apiClient) StartDeployment(ctx context.Context, orgID, appID, envID string, deployment *humanitec.StartDeploymentRequest) (*humanitec.Deployment, error) {
+func (api *apiClient) StartDeployment(ctx context.Context, orgID, appID, envID string, retry bool, deployment *humanitec.StartDeploymentRequest) (*humanitec.Deployment, error) {
 	data, err := json.Marshal(deployment)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling payload into JSON: %w", err)
@@ -53,6 +58,13 @@ func (api *apiClient) StartDeployment(ctx context.Context, orgID, appID, envID s
 			return &res, nil
 		}
 
+	case http.StatusConflict:
+		if retry {
+			time.Sleep(retryDelay)
+			return api.StartDeployment(ctx, orgID, appID, envID, retry, deployment)
+		}
+
+		fallthrough
 	default:
 		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
