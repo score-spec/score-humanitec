@@ -31,6 +31,7 @@ resources:
     properties:
       domain:
   backend:
-    type: workload
+    type: service
     properties:
       name:
+      port:

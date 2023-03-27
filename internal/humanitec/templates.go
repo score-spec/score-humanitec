@@ -47,9 +47,12 @@ func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, e
 		switch res.Type {
 		case "environment":
 			source = "values"
-		case "workload":
+		case "service":
 			source = fmt.Sprintf("modules.%s", resName)
 		default:
+			if res.Type == "workload" {
+				log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
+			}
 			if resExt, exists := ext[resName]; exists && resExt.Scope == "shared" {
 				source = fmt.Sprintf("shared.%s", resName)
 			} else {
@@ -63,7 +66,14 @@ func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, e
 			if _, exists := ctx[ref]; exists {
 				return nil, fmt.Errorf("ambiguous property reference '%s'", ref)
 			}
-			ctx[ref] = fmt.Sprintf("${%s.%s}", source, propName)
+			var sourceProp string
+			switch res.Type {
+			case "service":
+				sourceProp = fmt.Sprintf("service.%s", propName)
+			default:
+				sourceProp = propName
+			}
+			ctx[ref] = fmt.Sprintf("${%s.%s}", source, sourceProp)
 		}
 	}
 
