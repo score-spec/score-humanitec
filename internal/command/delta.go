@@ -38,6 +38,7 @@ func init() {
 	deltaCmd.MarkFlagRequired("env")
 
 	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")
+	deltaCmd.Flags().BoolVar(&retry, "retry", false, "Retry deployments when a deployment is currently in progress")
 	deltaCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
 
 	rootCmd.AddCommand(deltaCmd)
@@ -94,7 +95,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	//
 	if deploy {
 		log.Printf("Starting a new deployment for delta '%s'...\n", res.ID)
-		_, err := client.StartDeployment(context.Background(), orgID, appID, envID, &ht.StartDeploymentRequest{
+		_, err := client.StartDeployment(context.Background(), orgID, appID, envID, retry, &ht.StartDeploymentRequest{
 			DeltaID: res.ID,
 			Comment: "Auto-deployment (SCORE)",
 		})

@@ -34,7 +34,8 @@ func TestStartDeployment(t *testing.T) {
 		Name           string
 		ApiUrl         string
 		Data           *humanitec.StartDeploymentRequest
-		StatusCode     int
+		Retry          bool
+		StatusCode     []int
 		Response       []byte
 		ExpectedResult *humanitec.Deployment
 		ExpectedError  error
@@ -47,7 +48,7 @@ func TestStartDeployment(t *testing.T) {
 				DeltaID: "test-delta",
 				Comment: "Test deployment",
 			},
-			StatusCode: http.StatusCreated,
+			StatusCode: []int{http.StatusCreated},
 			Response: []byte(`{
 				"id": "qwe...rty",
 				"env_id": "test-env",
@@ -81,19 +82,61 @@ func TestStartDeployment(t *testing.T) {
 		},
 		{
 			Name:          "Should handle API errors",
-			StatusCode:    http.StatusInternalServerError,
+			StatusCode:    []int{http.StatusInternalServerError},
 			ExpectedError: errors.New("HTTP 500"),
 		},
 		{
 			Name:          "Should handle response parsing errors",
-			StatusCode:    http.StatusOK,
+			StatusCode:    []int{http.StatusOK},
 			Response:      []byte(`{NOT A VALID JSON}`),
 			ExpectedError: errors.New("parsing response"),
+		},
+		{
+			Name: "Should return conflict errors without retry",
+			Data: &humanitec.StartDeploymentRequest{
+				DeltaID: "test-delta",
+				Comment: "Test deployment",
+			},
+			Retry:         false,
+			StatusCode:    []int{http.StatusConflict},
+			ExpectedError: errors.New("HTTP 409"),
+		},
+		{
+			Name: "Should retry conflict errors with retry",
+			Data: &humanitec.StartDeploymentRequest{
+				DeltaID: "test-delta",
+				Comment: "Test deployment",
+			},
+			Retry:      true,
+			StatusCode: []int{http.StatusConflict, http.StatusCreated},
+			Response: []byte(`{
+				"id": "qwe...rty",
+				"env_id": "test-env",
+				"from_id": "qwe...rty",
+				"delta_id": "test-delta",
+				"comment": "Test deployment",
+				"status": "in progress",
+				"status_changed_at": "2020-05-22T14:59:01Z",
+				"created_at": "2020-05-22T14:58:07Z",
+				"created_by": "a.user@example.com"
+			}`),
+			ExpectedResult: &humanitec.Deployment{
+				ID:              "qwe...rty",
+				EnvID:           "test-env",
+				FromID:          "qwe...rty",
+				DeltaID:         "test-delta",
+				Comment:         "Test deployment",
+				Status:          "in progress",
+				StatusChangedAt: time.Time{},
+				CreatedBy:       "a.user@example.com",
+				CreatedAt:       time.Time{},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
+			request := 0
 			fakeServer := httptest.NewServer(
 				http.HandlerFunc(
 					func(w http.ResponseWriter, r *http.Request) {
@@ -114,11 +157,13 @@ func TestStartDeployment(t *testing.T) {
 								assert.Equal(t, tt.Data, &body)
 							}
 
-							w.WriteHeader(tt.StatusCode)
+							w.WriteHeader(tt.StatusCode[request])
 							if len(tt.Response) > 0 {
 								w.Header().Set("Content-Type", "application/json")
 								w.Write(tt.Response)
 							}
+
+							request++
 							return
 						}
 
@@ -134,7 +179,7 @@ func TestStartDeployment(t *testing.T) {
 
 			client, err := NewClient(tt.ApiUrl, apiToken, fakeServer.Client())
 			assert.NoError(t, err)
-			res, err := client.StartDeployment(testutil.TestContext(), orgID, appID, envID, tt.Data)
+			res, err := client.StartDeployment(testutil.TestContext(), orgID, appID, envID, tt.Retry, tt.Data)
 
 			if tt.ExpectedError != nil {
 				// On Error
