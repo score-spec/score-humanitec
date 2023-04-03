@@ -8,7 +8,6 @@ The Apache Software Foundation (http://www.apache.org/).
 package command
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +27,8 @@ func init() {
 	deltaCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
 	deltaCmd.Flags().StringVar(&uiUrl, "ui-url", uiUrlDefault, "Humanitec UI")
 	deltaCmd.Flags().StringVar(&apiUrl, "api-url", apiUrlDefault, "Humanitec API endpoint")
+	deltaCmd.Flags().StringVar(&deltaID, "delta", "", "The ID of an existing delta in Humanitec into which to merge the generated delta")
+
 	deltaCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
 	deltaCmd.MarkFlagRequired("token")
 	deltaCmd.Flags().StringVar(&orgID, "org", "", "Organization ID")
@@ -46,8 +47,12 @@ func init() {
 
 var deltaCmd = &cobra.Command{
 	Use:   "delta",
-	Short: "Creates Humanitec deployment delta from the source SCORE file",
-	RunE:  delta,
+	Short: "Creates or updates a Humanitec deployment delta from the source SCORE file",
+	Long: `This command will translate the SCORE file into a Humanitec deployment delta and submit it to the Humanitec
+environment specified by the --org, --app, and --env flags. If the --delta flag is provided, the generated delta will
+be merged with the specified existing delta. The --deploy flag allows the deployment of the delta to be triggered.
+`,
+	RunE: delta,
 }
 
 func delta(cmd *cobra.Command, args []string) error {
@@ -70,14 +75,20 @@ func delta(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}
 
-	// Create a new deployment delta
-	//
-	log.Print("Creating a new deployment delta...\n")
 	client, err := api.NewClient(apiUrl, apiToken, http.DefaultClient)
 	if err != nil {
 		return err
 	}
-	res, err := client.CreateDelta(context.Background(), orgID, appID, delta)
+
+	var res *ht.DeploymentDelta
+	if deltaID == "" {
+		log.Print("Creating a new deployment delta...\n")
+		res, err = client.CreateDelta(cmd.Context(), orgID, appID, delta)
+	} else {
+		log.Printf("Updating existing delta %s in place...\n", deltaID)
+		updates := []*ht.UpdateDeploymentDeltaRequest{{Modules: delta.Modules, Shared: delta.Shared}}
+		res, err = client.UpdateDelta(cmd.Context(), orgID, appID, deltaID, updates)
+	}
 	if err != nil {
 		return err
 	}
@@ -95,7 +106,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	//
 	if deploy {
 		log.Printf("Starting a new deployment for delta '%s'...\n", res.ID)
-		_, err := client.StartDeployment(context.Background(), orgID, appID, envID, retry, &ht.StartDeploymentRequest{
+		_, err := client.StartDeployment(cmd.Context(), orgID, appID, envID, retry, &ht.StartDeploymentRequest{
 			DeltaID: res.ID,
 			Comment: "Auto-deployment (SCORE)",
 		})

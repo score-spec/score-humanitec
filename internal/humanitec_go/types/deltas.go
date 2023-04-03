@@ -13,6 +13,11 @@ type CreateDeploymentDeltaRequest struct {
 	Shared   []UpdateAction `json:"shared,omitempty"`
 }
 
+type UpdateDeploymentDeltaRequest struct {
+	Modules ModuleDeltas   `json:"modules,omitempty"`
+	Shared  []UpdateAction `json:"shared,omitempty"`
+}
+
 type DeploymentDelta struct {
 	ID string `json:"id"`
 

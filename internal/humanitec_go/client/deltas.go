@@ -58,3 +58,42 @@ func (api *apiClient) CreateDelta(ctx context.Context, orgID, appID string, delt
 		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 }
+
+// UpdateDelta updates an existing Deployment Delta for the orgID and appID with the given deltaID.
+// The Deltas in the request will be combined and applied on top of existing Delta to produce a merged result.
+func (api *apiClient) UpdateDelta(ctx context.Context, orgID string, appID string, deltaID string, deltas []*humanitec.UpdateDeploymentDeltaRequest) (*humanitec.DeploymentDelta, error) {
+	data, err := json.Marshal(deltas)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling payload into JSON: %w", err)
+	}
+
+	apiPath := fmt.Sprintf("/orgs/%s/apps/%s/deltas/%s", orgID, appID, deltaID)
+	req := rest.Request{
+		Method:  http.MethodPatch,
+		BaseURL: api.baseUrl + apiPath,
+		Headers: map[string]string{
+			"Authorization": "Bearer " + api.token,
+			"Content-Type":  "application/json",
+			"Accept":        "application/json",
+		},
+		Body: data,
+	}
+
+	resp, err := api.client.SendWithContext(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("humanitec api: %s %s: %w", req.Method, req.BaseURL, err)
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		{
+			var res humanitec.DeploymentDelta
+			if err = json.Unmarshal([]byte(resp.Body), &res); err != nil {
+				return nil, fmt.Errorf("humanitec api: %s %s: parsing response: %w", req.Method, req.BaseURL, err)
+			}
+			return &res, nil
+		}
+	default:
+		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
+	}
+}
