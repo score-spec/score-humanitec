@@ -23,6 +23,7 @@ type Client interface {
 	// Deployment Deltas
 	//
 	CreateDelta(ctx context.Context, orgID, appID string, delta *humanitec.CreateDeploymentDeltaRequest) (*humanitec.DeploymentDelta, error)
+	UpdateDelta(ctx context.Context, orgID string, appID string, deltaID string, deltas []*humanitec.UpdateDeploymentDeltaRequest) (*humanitec.DeploymentDelta, error)
 
 	// Deployments
 	//

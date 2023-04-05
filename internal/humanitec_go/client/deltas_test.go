@@ -142,3 +142,70 @@ func TestCreateDelta(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateDelta_success(t *testing.T) {
+	const (
+		orgID    = "test_org"
+		appID    = "test-app"
+		deltaID  = "0123456789abcdef0123456789abcdef"
+		apiToken = "qwe...rty"
+	)
+
+	fakeServer := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodPatch && r.URL.Path == fmt.Sprintf("/orgs/%s/apps/%s/deltas/%s", orgID, appID, deltaID) {
+					assert.Equal(t, []string{"Bearer " + apiToken}, r.Header["Authorization"])
+					assert.Equal(t, []string{"application/json"}, r.Header["Accept"])
+					assert.Equal(t, []string{"application/json"}, r.Header["Content-Type"])
+					var body []*humanitec.UpdateDeploymentDeltaRequest
+					var dec = json.NewDecoder(r.Body)
+					assert.NoError(t, dec.Decode(&body))
+					assert.NotNil(t, &body)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusOK)
+					assert.NoError(t, json.NewEncoder(w).Encode(&humanitec.DeploymentDelta{
+						ID: deltaID,
+					}))
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			},
+		),
+	)
+	defer fakeServer.Close()
+
+	client, err := NewClient(fakeServer.URL, apiToken, fakeServer.Client())
+	assert.NoError(t, err)
+	res, err := client.UpdateDelta(testutil.TestContext(), orgID, appID, deltaID, []*humanitec.UpdateDeploymentDeltaRequest{
+		{Modules: humanitec.ModuleDeltas{}},
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+}
+
+func TestUpdateDelta_fail(t *testing.T) {
+	const (
+		orgID    = "test_org"
+		appID    = "test-app"
+		deltaID  = "0123456789abcdef0123456789abcdef"
+		apiToken = "qwe...rty"
+	)
+
+	fakeServer := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+		),
+	)
+	defer fakeServer.Close()
+
+	client, err := NewClient(fakeServer.URL, apiToken, fakeServer.Client())
+	assert.NoError(t, err)
+	res, err := client.UpdateDelta(testutil.TestContext(), orgID, appID, deltaID, []*humanitec.UpdateDeploymentDeltaRequest{
+		{Modules: humanitec.ModuleDeltas{}},
+	})
+	assert.Nil(t, res)
+	assert.ErrorContains(t, err, ": HTTP 404 - Not Found")
+}
