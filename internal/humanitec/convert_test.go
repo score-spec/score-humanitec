@@ -207,6 +207,9 @@ func TestScoreConvert(t *testing.T) {
 						Properties: map[string]score.ResourcePropertySpec{
 							"domain": {},
 						},
+						Params: map[string]interface{}{
+							"test": "value",
+						},
 					},
 					"data": {
 						Type: "volume",
@@ -224,6 +227,14 @@ func TestScoreConvert(t *testing.T) {
 							"name":      {Required: true},
 							"user_name": {Required: true, Secret: true},
 							"password":  {Required: true, Secret: true},
+						},
+						Params: map[string]interface{}{
+							"extensions": map[string]interface{}{
+								"uuid-ossp": map[string]interface{}{
+									"schema":  "uuid_schema",
+									"version": "1.1",
+								},
+							},
 						},
 					},
 					"orders": {
@@ -317,6 +328,14 @@ func TestScoreConvert(t *testing.T) {
 								},
 								"db": map[string]interface{}{
 									"type": "postgres",
+									"params": map[string]interface{}{
+										"extensions": map[string]interface{}{
+											"uuid-ossp": map[string]interface{}{
+												"schema":  "uuid_schema",
+												"version": "1.1",
+											},
+										},
+									},
 								},
 							},
 						},
@@ -328,6 +347,9 @@ func TestScoreConvert(t *testing.T) {
 						Path:      "/dns",
 						Value: map[string]interface{}{
 							"type": "dns",
+							"params": map[string]interface{}{
+								"test": "value",
+							},
 						},
 					},
 				},

@@ -184,17 +184,25 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 			switch scope {
 
 			case "", "external":
-				externals[name] = map[string]interface{}{
+				var extRes = map[string]interface{}{
 					"type": res.Type,
 				}
+				if len(res.Params) > 0 {
+					extRes["params"] = res.Params
+				}
+				externals[name] = extRes
 
 			case "shared":
+				var sharedRes = map[string]interface{}{
+					"type": res.Type,
+				}
+				if len(res.Params) > 0 {
+					sharedRes["params"] = res.Params
+				}
 				shared = append(shared, humanitec.UpdateAction{
 					Operation: "add",
 					Path:      "/" + name,
-					Value: map[string]interface{}{
-						"type": res.Type,
-					},
+					Value:     sharedRes,
 				})
 
 			default:
