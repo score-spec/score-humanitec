@@ -29,10 +29,12 @@ package extensions
 //	  dns:
 //	    scope: shared
 type HumanitecExtensionsSpec struct {
-	ApiVersion string                  `mapstructure:"apiVersion"`
-	Profile    string                  `mapstructure:"profile"`
-	Spec       map[string]interface{}  `mapstructure:"spec"`
-	Resources  HumanitecResourcesSpecs `mapstructure:"resources"`
+	ApiVersion string                 `mapstructure:"apiVersion"`
+	Profile    string                 `mapstructure:"profile"`
+	Spec       map[string]interface{} `mapstructure:"spec"`
+
+	// DEPRECATED: Should use score resources annotations instead
+	Resources HumanitecResourcesSpecs `mapstructure:"resources"`
 }
 
 // HumanitecResourcesSpecs is a map of workload resources specifications.

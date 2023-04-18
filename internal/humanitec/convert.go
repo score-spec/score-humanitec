@@ -9,12 +9,17 @@ package humanitec
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	mergo "github.com/imdario/mergo"
 	score "github.com/score-spec/score-go/types"
 	extensions "github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
+)
+
+const (
+	ResourceScopeAnnotationLabel = "humanitec.io/scope"
 )
 
 // getProbeDetails extracts an httpGet probe details from the source spec.
@@ -157,34 +162,48 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 		"spec":    workloadSpec,
 	}
 
-	var externals = map[string]interface{}{}
+	var externals = make(map[string]interface{})
+	var shared = make([]humanitec.UpdateAction, 0)
 	for name, res := range spec.Resources {
-		if meta, exists := ext.Resources[name]; !exists || meta.Scope == "" || meta.Scope == "external" {
-			if res.Type != "service" && res.Type != "environment" {
+		switch res.Type {
+
+		case "service", "environment":
+			continue
+
+		default:
+			scope, hasAnnotation := res.Metadata.Annotations[ResourceScopeAnnotationLabel]
+			// DEPRECATED: Should use resource annotations instead
+			if meta, hasMeta := ext.Resources[name]; hasMeta {
+				log.Printf("Warning: Extensions for resources has been deprecated. Use Score resource annotations instead. Extensions are stil configured for '%s'.\n", name)
+				if !hasAnnotation {
+					scope = meta.Scope
+				}
+			}
+			// END (DEPRECATED)
+
+			switch scope {
+
+			case "", "external":
 				externals[name] = map[string]interface{}{
 					"type": res.Type,
 				}
+
+			case "shared":
+				shared = append(shared, humanitec.UpdateAction{
+					Operation: "add",
+					Path:      "/" + name,
+					Value: map[string]interface{}{
+						"type": res.Type,
+					},
+				})
+
+			default:
+				log.Printf("Warning: Invalid scope value '%s' for resource '%s'. Not supported.\n", scope, name)
 			}
 		}
 	}
 	if len(externals) > 0 {
 		workload["externals"] = externals
-	}
-
-	var shared []humanitec.UpdateAction
-	for name, res := range spec.Resources {
-		if meta, exists := ext.Resources[name]; exists && meta.Scope == "shared" {
-			if shared == nil {
-				shared = make([]humanitec.UpdateAction, 0)
-			}
-			shared = append(shared, humanitec.UpdateAction{
-				Operation: "add",
-				Path:      "/" + name,
-				Value: map[string]interface{}{
-					"type": res.Type,
-				},
-			})
-		}
 	}
 
 	var res = humanitec.CreateDeploymentDeltaRequest{
@@ -197,7 +216,9 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 				spec.Metadata.Name: workload,
 			},
 		},
-		Shared: shared,
+	}
+	if len(shared) > 0 {
+		res.Shared = shared
 	}
 
 	return &res, nil

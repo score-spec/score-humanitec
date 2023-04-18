@@ -191,6 +191,11 @@ func TestScoreConvert(t *testing.T) {
 				},
 				Resources: map[string]score.ResourceSpec{
 					"env": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								ResourceScopeAnnotationLabel: "external",
+							},
+						},
 						Type: "environment",
 						Properties: map[string]score.ResourcePropertySpec{
 							"DEBUG":       {Default: false, Required: false},
@@ -207,6 +212,11 @@ func TestScoreConvert(t *testing.T) {
 						Type: "volume",
 					},
 					"db": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								ResourceScopeAnnotationLabel: "external",
+							},
+						},
 						Type: "postgres",
 						Properties: map[string]score.ResourcePropertySpec{
 							"host":      {Default: "localhost", Required: true},
@@ -245,6 +255,9 @@ func TestScoreConvert(t *testing.T) {
 					},
 				},
 				Resources: extensions.HumanitecResourcesSpecs{
+					"db": extensions.HumanitecResourceSpec{
+						Scope: "shared",
+					},
 					"dns": extensions.HumanitecResourceSpec{
 						Scope: "shared",
 					},
