@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	ResourceScopeAnnotationLabel = "humanitec.io/scope"
+	AnnotationLabelResourceId = "score.humanitec.io/resId"
 )
 
 // getProbeDetails extracts an httpGet probe details from the source spec.
@@ -171,28 +171,33 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 			continue
 
 		default:
-			scope, hasAnnotation := res.Metadata.Annotations[ResourceScopeAnnotationLabel]
+			resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+			if resId == "" {
+				resId = fmt.Sprintf("externals.%s", name)
+			}
+
 			// DEPRECATED: Should use resource annotations instead
 			if meta, hasMeta := ext.Resources[name]; hasMeta {
 				log.Printf("Warning: Extensions for resources has been deprecated. Use Score resource annotations instead. Extensions are stil configured for '%s'.\n", name)
-				if !hasAnnotation {
-					scope = meta.Scope
+				if !hasAnnotation && (meta.Scope == "" || meta.Scope == "externals") {
+					resId = fmt.Sprintf("externals.%s", name)
+				} else if !hasAnnotation && meta.Scope == "shared" {
+					resId = fmt.Sprintf("shared.%s", name)
 				}
 			}
 			// END (DEPRECATED)
 
-			switch scope {
-
-			case "", "external":
+			if strings.HasPrefix(resId, "externals.") {
+				var resName = strings.Replace(resId, "externals.", "", 1)
 				var extRes = map[string]interface{}{
 					"type": res.Type,
 				}
 				if len(res.Params) > 0 {
 					extRes["params"] = res.Params
 				}
-				externals[name] = extRes
-
-			case "shared":
+				externals[resName] = extRes
+			} else if strings.HasPrefix(resId, "shared.") {
+				var resName = strings.Replace(resId, "shared.", "", 1)
 				var sharedRes = map[string]interface{}{
 					"type": res.Type,
 				}
@@ -201,12 +206,11 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 				}
 				shared = append(shared, humanitec.UpdateAction{
 					Operation: "add",
-					Path:      "/" + name,
+					Path:      "/" + resName,
 					Value:     sharedRes,
 				})
-
-			default:
-				log.Printf("Warning: Invalid scope value '%s' for resource '%s'. Not supported.\n", scope, name)
+			} else {
+				log.Printf("Warning: Invalid resource id value '%s'. Not supported.\n", resId)
 			}
 		}
 	}

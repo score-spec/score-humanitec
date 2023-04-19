@@ -193,7 +193,7 @@ func TestScoreConvert(t *testing.T) {
 					"env": {
 						Metadata: score.ResourceMeta{
 							Annotations: map[string]string{
-								ResourceScopeAnnotationLabel: "external",
+								AnnotationLabelResourceId: "externals.should-ignore-this-one",
 							},
 						},
 						Type: "environment",
@@ -217,7 +217,7 @@ func TestScoreConvert(t *testing.T) {
 					"db": {
 						Metadata: score.ResourceMeta{
 							Annotations: map[string]string{
-								ResourceScopeAnnotationLabel: "external",
+								AnnotationLabelResourceId: "externals.annotations-db-id",
 							},
 						},
 						Type: "postgres",
@@ -288,7 +288,7 @@ func TestScoreConvert(t *testing.T) {
 											"DEBUG":             "${values.DEBUG}",
 											"LOGS_LEVEL":        "${pod.debug.level}",
 											"ORDERS_SERVICE":    "http://${modules.orders.service.name}:${modules.orders.service.port}/api",
-											"CONNECTION_STRING": "postgresql://${externals.db.host}:${externals.db.port}/${externals.db.name}",
+											"CONNECTION_STRING": "postgresql://${externals.annotations-db-id.host}:${externals.annotations-db-id.port}/${externals.annotations-db-id.name}",
 											"DOMAIN_NAME":       "${shared.dns.domain}",
 										},
 										"files": map[string]interface{}{
@@ -326,7 +326,7 @@ func TestScoreConvert(t *testing.T) {
 								"data": map[string]interface{}{
 									"type": "volume",
 								},
-								"db": map[string]interface{}{
+								"annotations-db-id": map[string]interface{}{
 									"type": "postgres",
 									"params": map[string]interface{}{
 										"extensions": map[string]interface{}{
