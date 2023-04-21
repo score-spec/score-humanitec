@@ -178,7 +178,7 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 
 			// DEPRECATED: Should use resource annotations instead
 			if meta, hasMeta := ext.Resources[name]; hasMeta {
-				log.Printf("Warning: Extensions for resources has been deprecated. Use Score resource annotations instead. Extensions are stil configured for '%s'.\n", name)
+				log.Printf("Warning: Extensions for resources has been deprecated. Use '%s' resource annotation instead. Extensions are still configured for '%s'.\n", AnnotationLabelResourceId, name)
 				if !hasAnnotation && (meta.Scope == "" || meta.Scope == "externals") {
 					resId = fmt.Sprintf("externals.%s", name)
 				} else if !hasAnnotation && meta.Scope == "shared" {
