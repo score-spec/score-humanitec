@@ -8,6 +8,7 @@ The Apache Software Foundation (http://www.apache.org/).
 package humanitec
 
 import (
+	"errors"
 	"testing"
 
 	score "github.com/score-spec/score-go/types"
@@ -15,6 +16,86 @@ import (
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestParseResourceId(t *testing.T) {
+	var tests = []struct {
+		Name               string
+		ResourceReference  string
+		ExpectedModuleId   string
+		ExpectedScope      string
+		ExpectedResourceId string
+		ExpectedError      error
+	}{
+		// Success path
+		//
+		{
+			Name:               "Should accept empty string",
+			ResourceReference:  "",
+			ExpectedResourceId: "",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept resource ID only",
+			ResourceReference:  "test-res-id",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept external resource reference",
+			ResourceReference:  "externals.test-res-id",
+			ExpectedScope:      "externals",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept shared resource reference",
+			ResourceReference:  "shared.test-res-id",
+			ExpectedScope:      "shared",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept foreighn module resource reference",
+			ResourceReference:  "modules.test-module.externals.test-res-id",
+			ExpectedModuleId:   "test-module",
+			ExpectedScope:      "externals",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+
+		// Errors handling
+		//
+		{
+			Name:              "Should reject incomplete resource reference",
+			ResourceReference: "test-module.externals.test-res-id",
+			ExpectedError:     errors.New("not supported"),
+		},
+		{
+			Name:              "Should reject non-module resource reference",
+			ResourceReference: "something.test-something.externals.test-res-id",
+			ExpectedError:     errors.New("not supported"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			mod, scope, resId, err := parseResourceId(tt.ResourceReference)
+
+			if tt.ExpectedError != nil {
+				// On Error
+				//
+				assert.ErrorContains(t, err, tt.ExpectedError.Error())
+			} else {
+				// On Success
+				//
+				assert.NoError(t, err)
+				assert.Equal(t, tt.ExpectedModuleId, mod)
+				assert.Equal(t, tt.ExpectedScope, scope)
+				assert.Equal(t, tt.ExpectedResourceId, resId)
+			}
+		})
+	}
+}
 
 func TestScoreConvert(t *testing.T) {
 	const (
@@ -168,6 +249,7 @@ func TestScoreConvert(t *testing.T) {
 							"ORDERS_SERVICE":    "http://${resources.orders.name}:${resources.orders.port}/api",
 							"CONNECTION_STRING": "postgresql://${resources.db.host}:${resources.db.port}/${resources.db.name}",
 							"DOMAIN_NAME":       "${resources.dns.domain}",
+							"EXTERNAL_RESOURCE": "${resources.external-resource.name}",
 						},
 						Files: []score.FileMountSpec{
 							{
@@ -244,6 +326,17 @@ func TestScoreConvert(t *testing.T) {
 							"port": {},
 						},
 					},
+					"external-resource": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								AnnotationLabelResourceId: "modules.test-module.externals.test-resource",
+							},
+						},
+						Type: "some-type",
+						Properties: map[string]score.ResourcePropertySpec{
+							"name": {Required: false},
+						},
+					},
 				},
 			},
 			Extensions: &extensions.HumanitecExtensionsSpec{
@@ -290,6 +383,7 @@ func TestScoreConvert(t *testing.T) {
 											"ORDERS_SERVICE":    "http://${modules.orders.service.name}:${modules.orders.service.port}/api",
 											"CONNECTION_STRING": "postgresql://${externals.annotations-db-id.host}:${externals.annotations-db-id.port}/${externals.annotations-db-id.name}",
 											"DOMAIN_NAME":       "${shared.dns.domain}",
+											"EXTERNAL_RESOURCE": "${modules.test-module.externals.test-resource.name}",
 										},
 										"files": map[string]interface{}{
 											"/etc/backend/config.yaml": map[string]interface{}{

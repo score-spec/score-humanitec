@@ -22,6 +22,44 @@ const (
 	AnnotationLabelResourceId = "score.humanitec.io/resId"
 )
 
+// parseResourceId extracts resource ID details from a resource reference string.
+// Supported reference string formants:
+//
+//	{resId}
+//	{externals|shared}.{resId}
+//	modules.{workloadId}.{externals|shared}.{resId}
+func parseResourceId(ref string) (workload, scope, resId string, err error) {
+	var segments = strings.SplitN(ref, ".", 4)
+	switch len(segments) {
+	case 4:
+		if segments[0] != "modules" {
+			err = fmt.Errorf("invalid resource reference '%s': not supported", ref)
+			return
+		}
+		workload = segments[1]
+		scope = segments[2]
+		resId = segments[3]
+	case 3:
+		if segments[0] != "modules" {
+			err = fmt.Errorf("invalid resource reference '%s': not supported", ref)
+			return
+		}
+	case 2:
+		workload = ""
+		scope = segments[0]
+		resId = segments[1]
+	case 1:
+		workload = ""
+		scope = ""
+		resId = segments[0]
+	default:
+		workload = ""
+		scope = ""
+		resId = ""
+	}
+	return
+}
+
 // getProbeDetails extracts an httpGet probe details from the source spec.
 // Returns nil if the source spec is empty.
 func getProbeDetails(probe *score.ContainerProbeSpec) map[string]interface{} {
@@ -187,30 +225,33 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 			}
 			// END (DEPRECATED)
 
-			if strings.HasPrefix(resId, "externals.") {
-				var resName = strings.Replace(resId, "externals.", "", 1)
-				var extRes = map[string]interface{}{
-					"type": res.Type,
+			if mod, scope, resName, err := parseResourceId(resId); err != nil {
+				log.Printf("Warning: %v.\n", err)
+			} else if mod == "" || mod == spec.Metadata.Name {
+				if scope == "externals" {
+					var extRes = map[string]interface{}{
+						"type": res.Type,
+					}
+					if len(res.Params) > 0 {
+						extRes["params"] = res.Params
+					}
+					externals[resName] = extRes
+				} else if scope == "shared" {
+					var resName = strings.Replace(resId, "shared.", "", 1)
+					var sharedRes = map[string]interface{}{
+						"type": res.Type,
+					}
+					if len(res.Params) > 0 {
+						sharedRes["params"] = res.Params
+					}
+					shared = append(shared, humanitec.UpdateAction{
+						Operation: "add",
+						Path:      "/" + resName,
+						Value:     sharedRes,
+					})
+				} else {
+					log.Printf("Warning: invalid resource reference '%s': not supported.\n", resId)
 				}
-				if len(res.Params) > 0 {
-					extRes["params"] = res.Params
-				}
-				externals[resName] = extRes
-			} else if strings.HasPrefix(resId, "shared.") {
-				var resName = strings.Replace(resId, "shared.", "", 1)
-				var sharedRes = map[string]interface{}{
-					"type": res.Type,
-				}
-				if len(res.Params) > 0 {
-					sharedRes["params"] = res.Params
-				}
-				shared = append(shared, humanitec.UpdateAction{
-					Operation: "add",
-					Path:      "/" + resName,
-					Value:     sharedRes,
-				})
-			} else {
-				log.Printf("Warning: Invalid resource id value '%s'. Not supported.\n", resId)
 			}
 		}
 	}
