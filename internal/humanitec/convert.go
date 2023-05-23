@@ -9,6 +9,7 @@ package humanitec
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	mergo "github.com/imdario/mergo"
@@ -16,6 +17,48 @@ import (
 	extensions "github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 )
+
+const (
+	AnnotationLabelResourceId = "score.humanitec.io/resId"
+)
+
+// parseResourceId extracts resource ID details from a resource reference string.
+// Supported reference string formants:
+//
+//	{resId}
+//	{externals|shared}.{resId}
+//	modules.{workloadId}.{externals|shared}.{resId}
+func parseResourceId(ref string) (workload, scope, resId string, err error) {
+	var segments = strings.SplitN(ref, ".", 4)
+	switch len(segments) {
+	case 4:
+		if segments[0] != "modules" {
+			err = fmt.Errorf("invalid resource reference '%s': not supported", ref)
+			return
+		}
+		workload = segments[1]
+		scope = segments[2]
+		resId = segments[3]
+	case 3:
+		if segments[0] != "modules" {
+			err = fmt.Errorf("invalid resource reference '%s': not supported", ref)
+			return
+		}
+	case 2:
+		workload = ""
+		scope = segments[0]
+		resId = segments[1]
+	case 1:
+		workload = ""
+		scope = ""
+		resId = segments[0]
+	default:
+		workload = ""
+		scope = ""
+		resId = ""
+	}
+	return
+}
 
 // getProbeDetails extracts an httpGet probe details from the source spec.
 // Returns nil if the source spec is empty.
@@ -157,34 +200,63 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 		"spec":    workloadSpec,
 	}
 
-	var externals = map[string]interface{}{}
+	var externals = make(map[string]interface{})
+	var shared = make([]humanitec.UpdateAction, 0)
 	for name, res := range spec.Resources {
-		if meta, exists := ext.Resources[name]; !exists || meta.Scope == "" || meta.Scope == "external" {
-			if res.Type != "service" && res.Type != "environment" {
-				externals[name] = map[string]interface{}{
-					"type": res.Type,
+		switch res.Type {
+
+		case "service", "environment":
+			continue
+
+		default:
+			resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+			if resId == "" {
+				resId = fmt.Sprintf("externals.%s", name)
+			}
+
+			// DEPRECATED: Should use resource annotations instead
+			if meta, hasMeta := ext.Resources[name]; hasMeta {
+				log.Printf("Warning: Extensions for resources has been deprecated. Use '%s' resource annotation instead. Extensions are still configured for '%s'.\n", AnnotationLabelResourceId, name)
+				if !hasAnnotation && (meta.Scope == "" || meta.Scope == "externals") {
+					resId = fmt.Sprintf("externals.%s", name)
+				} else if !hasAnnotation && meta.Scope == "shared" {
+					resId = fmt.Sprintf("shared.%s", name)
+				}
+			}
+			// END (DEPRECATED)
+
+			if mod, scope, resName, err := parseResourceId(resId); err != nil {
+				log.Printf("Warning: %v.\n", err)
+			} else if mod == "" || mod == spec.Metadata.Name {
+				if scope == "externals" {
+					var extRes = map[string]interface{}{
+						"type": res.Type,
+					}
+					if len(res.Params) > 0 {
+						extRes["params"] = res.Params
+					}
+					externals[resName] = extRes
+				} else if scope == "shared" {
+					var resName = strings.Replace(resId, "shared.", "", 1)
+					var sharedRes = map[string]interface{}{
+						"type": res.Type,
+					}
+					if len(res.Params) > 0 {
+						sharedRes["params"] = res.Params
+					}
+					shared = append(shared, humanitec.UpdateAction{
+						Operation: "add",
+						Path:      "/" + resName,
+						Value:     sharedRes,
+					})
+				} else {
+					log.Printf("Warning: invalid resource reference '%s': not supported.\n", resId)
 				}
 			}
 		}
 	}
 	if len(externals) > 0 {
 		workload["externals"] = externals
-	}
-
-	var shared []humanitec.UpdateAction
-	for name, res := range spec.Resources {
-		if meta, exists := ext.Resources[name]; exists && meta.Scope == "shared" {
-			if shared == nil {
-				shared = make([]humanitec.UpdateAction, 0)
-			}
-			shared = append(shared, humanitec.UpdateAction{
-				Operation: "add",
-				Path:      "/" + name,
-				Value: map[string]interface{}{
-					"type": res.Type,
-				},
-			})
-		}
 	}
 
 	var res = humanitec.CreateDeploymentDeltaRequest{
@@ -197,7 +269,9 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 				spec.Metadata.Name: workload,
 			},
 		},
-		Shared: shared,
+	}
+	if len(shared) > 0 {
+		res.Shared = shared
 	}
 
 	return &res, nil

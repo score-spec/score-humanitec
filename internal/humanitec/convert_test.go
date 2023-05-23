@@ -8,6 +8,7 @@ The Apache Software Foundation (http://www.apache.org/).
 package humanitec
 
 import (
+	"errors"
 	"testing"
 
 	score "github.com/score-spec/score-go/types"
@@ -15,6 +16,86 @@ import (
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestParseResourceId(t *testing.T) {
+	var tests = []struct {
+		Name               string
+		ResourceReference  string
+		ExpectedModuleId   string
+		ExpectedScope      string
+		ExpectedResourceId string
+		ExpectedError      error
+	}{
+		// Success path
+		//
+		{
+			Name:               "Should accept empty string",
+			ResourceReference:  "",
+			ExpectedResourceId: "",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept resource ID only",
+			ResourceReference:  "test-res-id",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept external resource reference",
+			ResourceReference:  "externals.test-res-id",
+			ExpectedScope:      "externals",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept shared resource reference",
+			ResourceReference:  "shared.test-res-id",
+			ExpectedScope:      "shared",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+		{
+			Name:               "Should accept foreighn module resource reference",
+			ResourceReference:  "modules.test-module.externals.test-res-id",
+			ExpectedModuleId:   "test-module",
+			ExpectedScope:      "externals",
+			ExpectedResourceId: "test-res-id",
+			ExpectedError:      nil,
+		},
+
+		// Errors handling
+		//
+		{
+			Name:              "Should reject incomplete resource reference",
+			ResourceReference: "test-module.externals.test-res-id",
+			ExpectedError:     errors.New("not supported"),
+		},
+		{
+			Name:              "Should reject non-module resource reference",
+			ResourceReference: "something.test-something.externals.test-res-id",
+			ExpectedError:     errors.New("not supported"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			mod, scope, resId, err := parseResourceId(tt.ResourceReference)
+
+			if tt.ExpectedError != nil {
+				// On Error
+				//
+				assert.ErrorContains(t, err, tt.ExpectedError.Error())
+			} else {
+				// On Success
+				//
+				assert.NoError(t, err)
+				assert.Equal(t, tt.ExpectedModuleId, mod)
+				assert.Equal(t, tt.ExpectedScope, scope)
+				assert.Equal(t, tt.ExpectedResourceId, resId)
+			}
+		})
+	}
+}
 
 func TestScoreConvert(t *testing.T) {
 	const (
@@ -168,6 +249,7 @@ func TestScoreConvert(t *testing.T) {
 							"ORDERS_SERVICE":    "http://${resources.orders.name}:${resources.orders.port}/api",
 							"CONNECTION_STRING": "postgresql://${resources.db.host}:${resources.db.port}/${resources.db.name}",
 							"DOMAIN_NAME":       "${resources.dns.domain}",
+							"EXTERNAL_RESOURCE": "${resources.external-resource.name}",
 						},
 						Files: []score.FileMountSpec{
 							{
@@ -191,6 +273,11 @@ func TestScoreConvert(t *testing.T) {
 				},
 				Resources: map[string]score.ResourceSpec{
 					"env": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								AnnotationLabelResourceId: "externals.should-ignore-this-one",
+							},
+						},
 						Type: "environment",
 						Properties: map[string]score.ResourcePropertySpec{
 							"DEBUG":       {Default: false, Required: false},
@@ -202,11 +289,19 @@ func TestScoreConvert(t *testing.T) {
 						Properties: map[string]score.ResourcePropertySpec{
 							"domain": {},
 						},
+						Params: map[string]interface{}{
+							"test": "value",
+						},
 					},
 					"data": {
 						Type: "volume",
 					},
 					"db": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								AnnotationLabelResourceId: "externals.annotations-db-id",
+							},
+						},
 						Type: "postgres",
 						Properties: map[string]score.ResourcePropertySpec{
 							"host":      {Default: "localhost", Required: true},
@@ -215,12 +310,31 @@ func TestScoreConvert(t *testing.T) {
 							"user_name": {Required: true, Secret: true},
 							"password":  {Required: true, Secret: true},
 						},
+						Params: map[string]interface{}{
+							"extensions": map[string]interface{}{
+								"uuid-ossp": map[string]interface{}{
+									"schema":  "uuid_schema",
+									"version": "1.1",
+								},
+							},
+						},
 					},
 					"orders": {
 						Type: "service",
 						Properties: map[string]score.ResourcePropertySpec{
 							"name": {Required: false},
 							"port": {},
+						},
+					},
+					"external-resource": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								AnnotationLabelResourceId: "modules.test-module.externals.test-resource",
+							},
+						},
+						Type: "some-type",
+						Properties: map[string]score.ResourcePropertySpec{
+							"name": {Required: false},
 						},
 					},
 				},
@@ -245,6 +359,9 @@ func TestScoreConvert(t *testing.T) {
 					},
 				},
 				Resources: extensions.HumanitecResourcesSpecs{
+					"db": extensions.HumanitecResourceSpec{
+						Scope: "shared",
+					},
 					"dns": extensions.HumanitecResourceSpec{
 						Scope: "shared",
 					},
@@ -264,8 +381,9 @@ func TestScoreConvert(t *testing.T) {
 											"DEBUG":             "${values.DEBUG}",
 											"LOGS_LEVEL":        "${pod.debug.level}",
 											"ORDERS_SERVICE":    "http://${modules.orders.service.name}:${modules.orders.service.port}/api",
-											"CONNECTION_STRING": "postgresql://${externals.db.host}:${externals.db.port}/${externals.db.name}",
+											"CONNECTION_STRING": "postgresql://${externals.annotations-db-id.host}:${externals.annotations-db-id.port}/${externals.annotations-db-id.name}",
 											"DOMAIN_NAME":       "${shared.dns.domain}",
+											"EXTERNAL_RESOURCE": "${modules.test-module.externals.test-resource.name}",
 										},
 										"files": map[string]interface{}{
 											"/etc/backend/config.yaml": map[string]interface{}{
@@ -302,8 +420,16 @@ func TestScoreConvert(t *testing.T) {
 								"data": map[string]interface{}{
 									"type": "volume",
 								},
-								"db": map[string]interface{}{
+								"annotations-db-id": map[string]interface{}{
 									"type": "postgres",
+									"params": map[string]interface{}{
+										"extensions": map[string]interface{}{
+											"uuid-ossp": map[string]interface{}{
+												"schema":  "uuid_schema",
+												"version": "1.1",
+											},
+										},
+									},
 								},
 							},
 						},
@@ -315,6 +441,9 @@ func TestScoreConvert(t *testing.T) {
 						Path:      "/dns",
 						Value: map[string]interface{}{
 							"type": "dns",
+							"params": map[string]interface{}{
+								"test": "value",
+							},
 						},
 					},
 				},

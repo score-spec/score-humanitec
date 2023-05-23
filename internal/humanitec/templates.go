@@ -53,8 +53,19 @@ func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, e
 			if res.Type == "workload" {
 				log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
 			}
-			if resExt, exists := ext[resName]; exists && resExt.Scope == "shared" {
-				source = fmt.Sprintf("shared.%s", resName)
+			resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+			// DEPRECATED: Should use resource annotations instead
+			if resExt, hasMeta := ext[resName]; hasMeta && !hasAnnotation {
+				if resExt.Scope == "" || resExt.Scope == "external" {
+					resId = fmt.Sprintf("externals.%s", resName)
+				} else if resExt.Scope == "shared" {
+					resId = fmt.Sprintf("shared.%s", resName)
+				}
+			}
+			// END (DEPRECATED)
+
+			if resId != "" {
+				source = resId
 			} else {
 				source = fmt.Sprintf("externals.%s", resName)
 			}
