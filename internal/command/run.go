@@ -9,6 +9,7 @@ package command
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,10 +18,12 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
 	loader "github.com/score-spec/score-go/loader"
+	schema "github.com/score-spec/score-go/schema"
 	score "github.com/score-spec/score-go/types"
 	"github.com/score-spec/score-humanitec/internal/humanitec"
 	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	"github.com/spf13/cobra"
+	"github.com/xeipuuv/gojsonschema"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -31,6 +34,7 @@ func init() {
 	runCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
 	runCmd.MarkFlagRequired("env")
 
+	runCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
 	runCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
 
 	rootCmd.AddCommand(runCmd)
@@ -49,7 +53,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Load SCORE spec and extensions
 	//
-	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile)
+	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile, skipValidation)
 	if err != nil {
 		return err
 	}
@@ -73,7 +77,7 @@ func run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadSpec(scoreFile, overridesFile, extensionsFile string) (*score.WorkloadSpec, *extensions.HumanitecExtensionsSpec, error) {
+func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bool) (*score.WorkloadSpec, *extensions.HumanitecExtensionsSpec, error) {
 	// Open source file
 	//
 	log.Printf("Reading '%s'...\n", scoreFile)
@@ -130,6 +134,24 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string) (*score.WorkloadS
 
 	// Validate SCORE spec
 	//
+	if !skipValidation {
+		log.Print("Validating SCORE spec...\n")
+		if res, err := schema.Validate(gojsonschema.NewGoLoader(srcMap)); err != nil {
+			return nil, nil, fmt.Errorf("validating workload spec: %w", err)
+		} else if !res.Valid() {
+			for _, valErr := range res.Errors() {
+				log.Println(valErr.String())
+				if err == nil {
+					err = errors.New(valErr.String())
+				}
+			}
+			return nil, nil, fmt.Errorf("validating workload spec: %w", err)
+		}
+	}
+
+	// Convert SCORE spec
+	//
+
 	var spec score.WorkloadSpec
 	log.Print("Validating SCORE spec...\n")
 	if err = mapstructure.Decode(srcMap, &spec); err != nil {
