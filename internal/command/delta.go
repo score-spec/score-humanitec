@@ -40,6 +40,7 @@ func init() {
 
 	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")
 	deltaCmd.Flags().BoolVar(&retry, "retry", false, "Retry deployments when a deployment is currently in progress")
+	deltaCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
 	deltaCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
 
 	rootCmd.AddCommand(deltaCmd)
@@ -62,7 +63,7 @@ func delta(cmd *cobra.Command, args []string) error {
 
 	// Load SCORE spec and extensions
 	//
-	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile)
+	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile, skipValidation)
 	if err != nil {
 		return err
 	}

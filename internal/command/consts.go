@@ -27,8 +27,9 @@ var (
 	envID          string
 
 	// deltaID is a cli flag receiver used to support "score-humanitec delta --use foo"
-	deltaID string
-	deploy  bool
-	retry   bool
-	verbose bool
+	deltaID        string
+	deploy         bool
+	retry          bool
+	skipValidation bool
+	verbose        bool
 )
