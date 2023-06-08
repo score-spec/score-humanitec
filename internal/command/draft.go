@@ -26,6 +26,8 @@ func init() {
 	draftCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
 	draftCmd.MarkFlagRequired("env")
 
+	draftCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+
 	draftCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new draft deployment at the end")
 	draftCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
 
