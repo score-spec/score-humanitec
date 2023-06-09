@@ -20,7 +20,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/score-spec/score-humanitec/internal/humanitec"
 	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
-	"github.com/score-spec/score-humanitec/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/sjson"
 	"github.com/xeipuuv/gojsonschema"
@@ -141,7 +140,11 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 			}
 		} else {
 			var path = pmap[0]
-			var val = utils.TryParseJsonValue(pmap[1])
+			var val interface{}
+			if err := yaml.Unmarshal([]byte(pmap[1]), &val); err != nil {
+				val = pmap[1]
+			}
+
 			log.Printf("overriding '%s' = '%s'", path, val)
 			if jsonBytes, err = sjson.SetBytes(jsonBytes, path, val); err != nil {
 				return nil, nil, fmt.Errorf("overriding '%s': %w", path, err)
