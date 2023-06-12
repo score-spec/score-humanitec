@@ -14,17 +14,21 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
-	loader "github.com/score-spec/score-go/loader"
-	schema "github.com/score-spec/score-go/schema"
-	score "github.com/score-spec/score-go/types"
 	"github.com/score-spec/score-humanitec/internal/humanitec"
 	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/sjson"
 	"github.com/xeipuuv/gojsonschema"
+
 	yaml "gopkg.in/yaml.v3"
+
+	loader "github.com/score-spec/score-go/loader"
+	schema "github.com/score-spec/score-go/schema"
+	score "github.com/score-spec/score-go/types"
 )
 
 func init() {
@@ -33,6 +37,8 @@ func init() {
 	runCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
 	runCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
 	runCmd.MarkFlagRequired("env")
+
+	runCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
 
 	runCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
 	runCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
@@ -95,7 +101,7 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 		return nil, nil, err
 	}
 
-	// Apply overrides (optional)
+	// Apply overrides from file (optional)
 	//
 	if overridesFile != "" {
 		log.Printf("Checking '%s'...\n", overridesFile)
@@ -112,6 +118,41 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 			}
 		} else if !os.IsNotExist(err) || overridesFile != overridesFileDefault {
 			return nil, nil, err
+		}
+	}
+
+	// Apply overrides from command line (optional)
+	//
+	for _, pstr := range overrideParams {
+		log.Print("Applying SCORE properties overrides...\n")
+
+		jsonBytes, err := json.Marshal(srcMap)
+		if err != nil {
+			return nil, nil, fmt.Errorf("marshalling score spec: %w", err)
+		}
+
+		pmap := strings.SplitN(pstr, "=", 2)
+		if len(pmap) <= 1 {
+			var path = pmap[0]
+			log.Printf("removing '%s'", path)
+			if jsonBytes, err = sjson.DeleteBytes(jsonBytes, path); err != nil {
+				return nil, nil, fmt.Errorf("removing '%s': %w", path, err)
+			}
+		} else {
+			var path = pmap[0]
+			var val interface{}
+			if err := yaml.Unmarshal([]byte(pmap[1]), &val); err != nil {
+				val = pmap[1]
+			}
+
+			log.Printf("overriding '%s' = '%s'", path, val)
+			if jsonBytes, err = sjson.SetBytes(jsonBytes, path, val); err != nil {
+				return nil, nil, fmt.Errorf("overriding '%s': %w", path, err)
+			}
+		}
+
+		if err = json.Unmarshal(jsonBytes, &srcMap); err != nil {
+			return nil, nil, fmt.Errorf("unmarshalling score spec: %w", err)
 		}
 	}
 

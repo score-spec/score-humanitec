@@ -26,6 +26,8 @@ var (
 	appID          string
 	envID          string
 
+	overrideParams []string
+
 	// deltaID is a cli flag receiver used to support "score-humanitec delta --use foo"
 	deltaID        string
 	deploy         bool
