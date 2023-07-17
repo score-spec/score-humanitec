@@ -13,6 +13,7 @@ const (
 	extensionsFileDefault = "./humanitec.score.yaml"
 	apiUrlDefault         = "https://api.humanitec.io"
 	uiUrlDefault          = "https://app.humanitec.io"
+	messageDefault        = "Auto-deployment (SCORE)"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 	envID          string
 
 	overrideParams []string
+	message        string
 
 	// deltaID is a cli flag receiver used to support "score-humanitec delta --use foo"
 	deltaID        string
