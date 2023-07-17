@@ -39,6 +39,7 @@ func init() {
 	runCmd.MarkFlagRequired("env")
 
 	runCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+	runCmd.Flags().StringVar(&message, "message", "m", messageDefault, "Message")
 
 	runCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
 	runCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
@@ -67,7 +68,7 @@ func run(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec("Auto-generated (SCORE)", envID, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}
