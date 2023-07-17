@@ -39,6 +39,7 @@ func init() {
 	deltaCmd.MarkFlagRequired("env")
 
 	deltaCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+	deltaCmd.Flags().StringVar(&message, "message", "m", messageDefault, "Message")
 
 	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")
 	deltaCmd.Flags().BoolVar(&retry, "retry", false, "Retry deployments when a deployment is currently in progress")
@@ -73,7 +74,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec("Auto-generated (SCORE)", envID, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}
