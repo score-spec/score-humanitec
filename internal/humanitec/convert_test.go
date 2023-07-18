@@ -279,16 +279,9 @@ func TestScoreConvert(t *testing.T) {
 							},
 						},
 						Type: "environment",
-						Properties: map[string]score.ResourcePropertySpec{
-							"DEBUG":       {Default: false, Required: false},
-							"DATADOG_ENV": {},
-						},
 					},
 					"dns": {
 						Type: "dns",
-						Properties: map[string]score.ResourcePropertySpec{
-							"domain": {},
-						},
 						Params: map[string]interface{}{
 							"test": "value",
 						},
@@ -303,13 +296,6 @@ func TestScoreConvert(t *testing.T) {
 							},
 						},
 						Type: "postgres",
-						Properties: map[string]score.ResourcePropertySpec{
-							"host":      {Default: "localhost", Required: true},
-							"port":      {Default: 5432, Required: false},
-							"name":      {Required: true},
-							"user_name": {Required: true, Secret: true},
-							"password":  {Required: true, Secret: true},
-						},
 						Params: map[string]interface{}{
 							"extensions": map[string]interface{}{
 								"uuid-ossp": map[string]interface{}{
@@ -321,10 +307,6 @@ func TestScoreConvert(t *testing.T) {
 					},
 					"orders": {
 						Type: "service",
-						Properties: map[string]score.ResourcePropertySpec{
-							"name": {Required: false},
-							"port": {},
-						},
 					},
 					"external-resource": {
 						Metadata: score.ResourceMeta{
@@ -333,9 +315,6 @@ func TestScoreConvert(t *testing.T) {
 							},
 						},
 						Type: "some-type",
-						Properties: map[string]score.ResourcePropertySpec{
-							"name": {Required: false},
-						},
 					},
 				},
 			},

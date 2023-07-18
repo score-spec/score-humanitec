@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -19,12 +20,14 @@ import (
 )
 
 // templatesContext ia an utility type that provides a context for '${...}' templates substitution
-type templatesContext map[string]string
+type templatesContext struct {
+	meta       map[string]interface{}
+	resources  score.ResourcesSpecs
+	extensions extensions.HumanitecResourcesSpecs
+}
 
 // buildContext initializes a new templatesContext instance
-func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, ext extensions.HumanitecResourcesSpecs) (templatesContext, error) {
-	var ctx = make(map[string]string)
-
+func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, ext extensions.HumanitecResourcesSpecs) (*templatesContext, error) {
 	var metadataMap = make(map[string]interface{})
 	if decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName: "json",
@@ -33,75 +36,26 @@ func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, e
 		return nil, err
 	} else {
 		decoder.Decode(metadata)
-		for key, val := range metadataMap {
-			var ref = fmt.Sprintf("metadata.%s", key)
-			if _, exists := ctx[ref]; exists {
-				return nil, fmt.Errorf("ambiguous property reference '%s'", ref)
-			}
-			ctx[ref] = fmt.Sprintf("%v", val)
-		}
 	}
 
-	for resName, res := range resources {
-		var source string
-		switch res.Type {
-		case "environment":
-			source = "values"
-		case "service":
-			source = fmt.Sprintf("modules.%s", resName)
-		default:
-			if res.Type == "workload" {
-				log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
-			}
-			resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
-			// DEPRECATED: Should use resource annotations instead
-			if resExt, hasMeta := ext[resName]; hasMeta && !hasAnnotation {
-				if resExt.Scope == "" || resExt.Scope == "external" {
-					resId = fmt.Sprintf("externals.%s", resName)
-				} else if resExt.Scope == "shared" {
-					resId = fmt.Sprintf("shared.%s", resName)
-				}
-			}
-			// END (DEPRECATED)
-
-			if resId != "" {
-				source = resId
-			} else {
-				source = fmt.Sprintf("externals.%s", resName)
-			}
-		}
-		ctx[fmt.Sprintf("resources.%s", resName)] = source
-
-		for propName := range res.Properties {
-			var ref = fmt.Sprintf("resources.%s.%s", resName, propName)
-			if _, exists := ctx[ref]; exists {
-				return nil, fmt.Errorf("ambiguous property reference '%s'", ref)
-			}
-			var sourceProp string
-			switch res.Type {
-			case "service":
-				sourceProp = fmt.Sprintf("service.%s", propName)
-			default:
-				sourceProp = propName
-			}
-			ctx[ref] = fmt.Sprintf("${%s.%s}", source, sourceProp)
-		}
-	}
-
-	return ctx, nil
+	return &templatesContext{
+		meta:       metadataMap,
+		resources:  resources,
+		extensions: ext,
+	}, nil
 }
 
 // SubstituteAll replaces all matching '${...}' templates in map keys and string values recursively.
-func (context templatesContext) SubstituteAll(src map[string]interface{}) map[string]interface{} {
+func (ctx *templatesContext) SubstituteAll(src map[string]interface{}) map[string]interface{} {
 	var dst = make(map[string]interface{}, 0)
 
 	for key, val := range src {
-		key = context.Substitute(key)
+		key = ctx.Substitute(key)
 		switch v := val.(type) {
 		case string:
-			val = context.Substitute(v)
+			val = ctx.Substitute(v)
 		case map[string]interface{}:
-			val = context.SubstituteAll(v)
+			val = ctx.SubstituteAll(v)
 		}
 		dst[key] = val
 	}
@@ -110,13 +64,13 @@ func (context templatesContext) SubstituteAll(src map[string]interface{}) map[st
 }
 
 // Substitute replaces all matching '${...}' templates in a source string
-func (context templatesContext) Substitute(src string) string {
-	return os.Expand(src, context.mapVar)
+func (ctx *templatesContext) Substitute(src string) string {
+	return os.Expand(src, ctx.mapVar)
 }
 
 // MapVar replaces objects and properties references with corresponding values
 // Returns an empty string if the reference can't be resolved
-func (context templatesContext) mapVar(ref string) string {
+func (ctx *templatesContext) mapVar(ref string) string {
 	if ref == "" {
 		return ""
 	}
@@ -130,8 +84,63 @@ func (context templatesContext) mapVar(ref string) string {
 		return ref
 	}
 
-	if res, ok := context[ref]; ok {
-		return res
+	var segments = strings.SplitN(ref, ".", 2)
+	switch segments[0] {
+	case "metadata":
+		if len(segments) == 2 {
+			if val, exists := ctx.meta[segments[1]]; exists {
+				return fmt.Sprintf("%v", val)
+			}
+		}
+
+	case "resources":
+		if len(segments) == 2 {
+			segments = strings.SplitN(segments[1], ".", 2)
+			var resName = segments[0]
+			if res, exists := ctx.resources[resName]; exists {
+				var source string
+				switch res.Type {
+				case "environment":
+					source = "values"
+				case "service":
+					source = fmt.Sprintf("modules.%s", resName)
+				default:
+					if res.Type == "workload" {
+						log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
+					}
+					resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+					// DEPRECATED: Should use resource annotations instead
+					if resExt, hasMeta := ctx.extensions[resName]; hasMeta && !hasAnnotation {
+						if resExt.Scope == "" || resExt.Scope == "external" {
+							resId = fmt.Sprintf("externals.%s", resName)
+						} else if resExt.Scope == "shared" {
+							resId = fmt.Sprintf("shared.%s", resName)
+						}
+					}
+					// END (DEPRECATED)
+
+					if resId != "" {
+						source = resId
+					} else {
+						source = fmt.Sprintf("externals.%s", resName)
+					}
+				}
+
+				if len(segments) == 1 {
+					return source
+				} else {
+					var propName = segments[1]
+					var sourceProp string
+					switch res.Type {
+					case "service":
+						sourceProp = fmt.Sprintf("service.%s", propName)
+					default:
+						sourceProp = propName
+					}
+					return fmt.Sprintf("${%s.%s}", source, sourceProp)
+				}
+			}
+		}
 	}
 
 	log.Printf("Warning: Can not resolve '%s'. Resource or property is not declared.", ref)

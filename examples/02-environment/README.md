@@ -19,10 +19,6 @@ containers:
 resources:
   env:
     type: environment
-    properties:
-      NAME:
-        type: string
-        default: World
 ```
 
 To prepare a new Humanitec deployment delta from this `score.yaml` file, use `score-humanitec` CLI tool:
