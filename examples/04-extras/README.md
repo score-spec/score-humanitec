@@ -26,11 +26,6 @@ containers:
 resources:
   env:
     type: environment
-    properties:
-      MESSAGE:
-        type: string
-      DATADOG_ENV:
-        type: string
   dns:
     type: dns
 ```

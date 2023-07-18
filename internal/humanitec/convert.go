@@ -144,14 +144,14 @@ func convertContainerSpec(name string, spec *score.ContainerSpec, context *templ
 
 // ConvertSpec converts SCORE specification into Humanitec deployment delta.
 func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.HumanitecExtensionsSpec) (*humanitec.CreateDeploymentDeltaRequest, error) {
-	context, err := buildContext(spec.Metadata, spec.Resources, ext.Resources)
+	ctx, err := buildContext(spec.Metadata, spec.Resources, ext.Resources)
 	if err != nil {
 		return nil, fmt.Errorf("preparing context: %w", err)
 	}
 
 	var containers = make(map[string]interface{}, len(spec.Containers))
 	for cName, cSpec := range spec.Containers {
-		if container, err := convertContainerSpec(cName, &cSpec, &context); err == nil {
+		if container, err := convertContainerSpec(cName, &cSpec, ctx); err == nil {
 			containers[cName] = container
 		} else {
 			return nil, fmt.Errorf("processing container specification for '%s': %w", cName, err)
@@ -184,7 +184,7 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 	}
 
 	if ext != nil && len(ext.Spec) > 0 {
-		var features = context.SubstituteAll(ext.Spec)
+		var features = ctx.SubstituteAll(ext.Spec)
 		if err := mergo.Merge(&workloadSpec, features); err != nil {
 			return nil, fmt.Errorf("applying workload profile features: %w", err)
 		}
