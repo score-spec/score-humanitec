@@ -44,7 +44,12 @@ func TestCreateDelta(t *testing.T) {
 				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test delta"},
 				Modules: humanitec.ModuleDeltas{
 					Add: map[string]map[string]interface{}{
-						"module-01": {"image": "busybox"},
+						"module-01": {
+							"image": "busybox",
+							"variables": map[string]interface{}{
+								"TEST": "<a>",
+							},
+						},
 					},
 				},
 			},
@@ -53,7 +58,7 @@ func TestCreateDelta(t *testing.T) {
 				"id": "qwe...rty",
 				"metadata": { "env_id": "test", "name": "Test delta" },
 				"modules": { 
-					"add": { "module-01": { "image": "busybox" } }
+					"add": { "module-01": { "image": "busybox", "variables": { "TEST": "<a>" } } }
 				}
 			}`),
 			ExpectedResult: &humanitec.DeploymentDelta{
@@ -61,7 +66,12 @@ func TestCreateDelta(t *testing.T) {
 				Metadata: humanitec.DeltaMetadata{EnvID: "test", Name: "Test delta"},
 				Modules: humanitec.ModuleDeltas{
 					Add: map[string]map[string]interface{}{
-						"module-01": {"image": "busybox"},
+						"module-01": {
+							"image": "busybox",
+							"variables": map[string]interface{}{
+								"TEST": "<a>",
+							},
+						},
 					},
 				},
 			},
