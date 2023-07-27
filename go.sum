@@ -13,8 +13,8 @@ github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RR
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
-github.com/score-spec/score-go v0.0.0-20230615134243-75a810d22ad1 h1:i/6Z1cPwKOEJp0jNK3oyh1RCWnGR1Cn4cAorRdCIe2M=
-github.com/score-spec/score-go v0.0.0-20230615134243-75a810d22ad1/go.mod h1:kqDzGrkDasa4D1A9MWgHPVPoRVa+zZgFijYOZNDLSpM=
+github.com/score-spec/score-go v0.0.0-20230727093059-c46db671789d h1:aNSrZKqtezQXdW2aOcERvSrzOFF7DA08lWTUw7qQ53s=
+github.com/score-spec/score-go v0.0.0-20230727093059-c46db671789d/go.mod h1:kqDzGrkDasa4D1A9MWgHPVPoRVa+zZgFijYOZNDLSpM=
 github.com/sendgrid/rest v2.6.9+incompatible h1:1EyIcsNdn9KIisLW50MKwmSRSK+ekueiEMJ7NEoxJo0=
 github.com/sendgrid/rest v2.6.9+incompatible/go.mod h1:kXX7q3jZtJXK5c5qK83bSGMdV6tsOE70KbHoqJls4lE=
 github.com/spf13/cobra v1.6.0 h1:42a0n6jwCot1pUmomAp4T7DeMD+20LFv4Q54pxLf2LI=
