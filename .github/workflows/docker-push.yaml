@@ -17,4 +17,4 @@ jobs:
         push: true
         tags: noordsestern/score-humanitec:latest
         secrets: |
-          GIT_AUTH_TOKEN=${{ github.token }}
+          GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
