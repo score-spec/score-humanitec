@@ -15,6 +15,6 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: noordsestern/score-humanitec:latest
+        tags: ghrc.io/noordsestern/score-humanitec:latest
         secrets: |
           GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
