@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build and push
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v4.1.1
       with:
         push: true
         tags: ghrc.io/noordsestern/score-humanitec:latest
