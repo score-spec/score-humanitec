@@ -26,3 +26,7 @@ COPY --from=builder /usr/local/bin/score-humanitec /usr/local/bin/score-humanite
 
 # Run the binary.
 ENTRYPOINT ["/usr/local/bin/score-humanitec"]
+
+FROM builder AS environment
+
+RUN export PATH=$PATH:/usr/local/bin/score-humanitec
