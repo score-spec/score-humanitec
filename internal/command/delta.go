@@ -39,7 +39,7 @@ func init() {
 	deltaCmd.MarkFlagRequired("env")
 
 	deltaCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
-	deltaCmd.Flags().StringVar(&message, "message", "m", messageDefault, "Message")
+	deltaCmd.Flags().StringVarP(&message, "message", "m", messageDefault, "Message")
 
 	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")
 	deltaCmd.Flags().BoolVar(&retry, "retry", false, "Retry deployments when a deployment is currently in progress")
