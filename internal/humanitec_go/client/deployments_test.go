@@ -149,6 +149,7 @@ func TestStartDeployment(t *testing.T) {
 							assert.Equal(t, []string{"Bearer " + apiToken}, r.Header["Authorization"])
 							assert.Equal(t, []string{"application/json"}, r.Header["Accept"])
 							assert.Equal(t, []string{"application/json"}, r.Header["Content-Type"])
+							assert.Equal(t, []string{"app score-humanitec/0.0.0; sdk score-humanitec/0.0.0"}, r.Header["Humanitec-User-Agent"])
 
 							if tt.Data != nil {
 								var body humanitec.StartDeploymentRequest

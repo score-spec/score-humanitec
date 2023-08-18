@@ -39,7 +39,7 @@ func init() {
 	runCmd.MarkFlagRequired("env")
 
 	runCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
-	runCmd.Flags().StringVar(&message, "message", "m", messageDefault, "Message")
+	runCmd.Flags().StringVarP(&message, "message", "m", messageDefault, "Message")
 
 	runCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
 	runCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")
