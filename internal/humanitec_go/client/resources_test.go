@@ -111,6 +111,7 @@ func TestListResourceTypes(t *testing.T) {
 							}
 							assert.Equal(t, []string{"Bearer " + apiToken}, r.Header["Authorization"])
 							assert.Equal(t, []string{"application/json"}, r.Header["Accept"])
+							assert.Equal(t, []string{"app score-humanitec/0.0.0; sdk score-humanitec/0.0.0"}, r.Header["Humanitec-User-Agent"])
 
 							w.WriteHeader(tt.StatusCode)
 							if len(tt.Response) > 0 {
