@@ -32,9 +32,10 @@ func (api *apiClient) CreateDelta(ctx context.Context, orgID, appID string, delt
 		Method:  http.MethodPost,
 		BaseURL: api.baseUrl + apiPath,
 		Headers: map[string]string{
-			"Authorization": "Bearer " + api.token,
-			"Content-Type":  "application/json",
-			"Accept":        "application/json",
+			"Authorization":        "Bearer " + api.token,
+			"Content-Type":         "application/json",
+			"Accept":               "application/json",
+			"Humanitec-User-Agent": api.humanitecUserAgent,
 		},
 		Body: data,
 	}
@@ -76,9 +77,10 @@ func (api *apiClient) UpdateDelta(ctx context.Context, orgID string, appID strin
 		Method:  http.MethodPatch,
 		BaseURL: api.baseUrl + apiPath,
 		Headers: map[string]string{
-			"Authorization": "Bearer " + api.token,
-			"Content-Type":  "application/json",
-			"Accept":        "application/json",
+			"Authorization":        "Bearer " + api.token,
+			"Content-Type":         "application/json",
+			"Accept":               "application/json",
+			"Humanitec-User-Agent": api.humanitecUserAgent,
 		},
 		Body: buf.Bytes(),
 	}

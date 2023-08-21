@@ -25,8 +25,9 @@ func (api *apiClient) ListResourceTypes(ctx context.Context, orgID string) ([]hu
 		Method:  http.MethodGet,
 		BaseURL: api.baseUrl + apiPath,
 		Headers: map[string]string{
-			"Authorization": "Bearer " + api.token,
-			"Accept":        "application/json",
+			"Authorization":        "Bearer " + api.token,
+			"Accept":               "application/json",
+			"Humanitec-User-Agent": api.humanitecUserAgent,
 		},
 	}
 

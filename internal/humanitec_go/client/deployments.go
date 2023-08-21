@@ -35,9 +35,10 @@ func (api *apiClient) StartDeployment(ctx context.Context, orgID, appID, envID s
 		Method:  http.MethodPost,
 		BaseURL: api.baseUrl + apiPath,
 		Headers: map[string]string{
-			"Authorization": "Bearer " + api.token,
-			"Content-Type":  "application/json",
-			"Accept":        "application/json",
+			"Authorization":        "Bearer " + api.token,
+			"Content-Type":         "application/json",
+			"Accept":               "application/json",
+			"Humanitec-User-Agent": api.humanitecUserAgent,
 		},
 		Body: data,
 	}
