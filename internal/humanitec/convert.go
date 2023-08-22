@@ -233,7 +233,7 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 						"type": res.Type,
 					}
 					if len(res.Params) > 0 {
-						extRes["params"] = res.Params
+						extRes["params"] = ctx.SubstituteAll(res.Params)
 					}
 					externals[resName] = extRes
 				} else if scope == "shared" {
@@ -242,7 +242,7 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 						"type": res.Type,
 					}
 					if len(res.Params) > 0 {
-						sharedRes["params"] = res.Params
+						sharedRes["params"] = ctx.SubstituteAll(res.Params)
 					}
 					shared = append(shared, humanitec.UpdateAction{
 						Operation: "add",

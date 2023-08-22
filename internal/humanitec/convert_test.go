@@ -316,6 +316,12 @@ func TestScoreConvert(t *testing.T) {
 						},
 						Type: "some-type",
 					},
+					"route": {
+						Type: "route",
+						Params: map[string]interface{}{
+							"host": "${resources.dns.host}",
+						},
+					},
 				},
 			},
 			Extensions: &extensions.HumanitecExtensionsSpec{
@@ -408,6 +414,12 @@ func TestScoreConvert(t *testing.T) {
 												"version": "1.1",
 											},
 										},
+									},
+								},
+								"route": map[string]interface{}{
+									"type": "route",
+									"params": map[string]interface{}{
+										"host": "${shared.dns.host}",
 									},
 								},
 							},
