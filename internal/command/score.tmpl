@@ -1,0 +1,15 @@
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: {{ .Metadata }}
+
+containers:
+  {{ .Resource }}:
+    image: busybox
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do echo Hello World!; sleep 5; done"]
+
+
+resources:
+  env:
+    type: {{ .Environment }}
