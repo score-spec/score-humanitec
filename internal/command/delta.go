@@ -112,7 +112,7 @@ func delta(cmd *cobra.Command, args []string) error {
 		log.Printf("Starting a new deployment for delta '%s'...\n", res.ID)
 		_, err := client.StartDeployment(cmd.Context(), orgID, appID, envID, retry, &ht.StartDeploymentRequest{
 			DeltaID: res.ID,
-			Comment: "Auto-deployment (SCORE)",
+			Comment: message,
 		})
 		if err != nil {
 			return err
