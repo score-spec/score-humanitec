@@ -8,8 +8,7 @@ name: Docker
 on:
   push:
     branches: [ "docker-0.6.0" ]
-    # Publish semver tags as releases.
-    tags: ['\d*\.\d*\.\d*(-.+)?' ]
+    tags:
 
 env:
   # Use docker.io for Docker Hub if empty
