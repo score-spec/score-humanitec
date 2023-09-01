@@ -260,10 +260,22 @@ func TestScoreConvert(t *testing.T) {
 							{
 								Target: "/etc/backend/config.yaml",
 								Mode:   "666",
-								Content: []string{
+								Content: []interface{}{
 									"---",
 									"DEBUG: ${resources.env.DEBUG}",
 								},
+							},
+							{
+								Target:   "/etc/backend/config.yml",
+								Mode:     "666",
+								Content:  "DEBUG: ${resources.env.DEBUG}",
+								NoExpand: true,
+							},
+							{
+								Target:   "/etc/backend/config.txt",
+								Mode:     "666",
+								Source:   "testdata/config.txt",
+								NoExpand: true,
 							},
 						},
 						Volumes: []score.VolumeMountSpec{
@@ -385,6 +397,14 @@ func TestScoreConvert(t *testing.T) {
 												"mode":  "666",
 												"value": "---\nDEBUG: ${values.DEBUG}",
 											},
+											"/etc/backend/config.yml": map[string]interface{}{
+												"mode":  "666",
+												"value": "DEBUG: ${resources.env.DEBUG}",
+											},
+											"/etc/backend/config.txt": map[string]interface{}{
+												"mode":  "666",
+												"value": "Mounted\nFile\nContent\n${resources.env.DEBUG}",
+											},
 										},
 										"volume_mounts": map[string]interface{}{
 											"/mnt/data": map[string]interface{}{
@@ -454,7 +474,7 @@ func TestScoreConvert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			res, err := ConvertSpec(name, envID, tt.WorkloadSourceURL, tt.Source, tt.Extensions)
+			res, err := ConvertSpec(name, envID, "", tt.WorkloadSourceURL, tt.Source, tt.Extensions)
 
 			if tt.Error != nil {
 				// On Error

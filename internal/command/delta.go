@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/score-spec/score-humanitec/internal/humanitec"
 	api "github.com/score-spec/score-humanitec/internal/humanitec_go/client"
@@ -67,6 +68,7 @@ func delta(cmd *cobra.Command, args []string) error {
 
 	// Load SCORE spec and extensions
 	//
+	baseDir := filepath.Dir(scoreFile)
 	spec, ext, err := loadSpec(scoreFile, overridesFile, extensionsFile, skipValidation)
 	if err != nil {
 		return err
@@ -75,7 +77,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec(message, envID, workloadSourceURL, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, baseDir, workloadSourceURL, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}
