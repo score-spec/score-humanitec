@@ -13,7 +13,7 @@ metadata:
 service:
   ports:
     www:
-      port: 80
+      targetPort: 80
 
 containers:
   web-app:
@@ -21,7 +21,7 @@ containers:
     files:
       - target: /usr/share/nginx/html/index.html
         mode: "644"
-        content: ["${resources.env.MESSAGE}"]
+        content: "${resources.env.MESSAGE}"
 
 resources:
   env:

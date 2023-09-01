@@ -1,0 +1,4 @@
+Mounted
+File
+Content
+${resources.env.DEBUG}
