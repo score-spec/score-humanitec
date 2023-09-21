@@ -26,6 +26,7 @@ var (
 	orgID          string
 	appID          string
 	envID          string
+	managedByUrl   string
 
 	overrideParams []string
 	message        string

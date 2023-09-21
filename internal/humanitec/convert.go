@@ -143,10 +143,16 @@ func convertContainerSpec(name string, spec *score.ContainerSpec, context *templ
 }
 
 // ConvertSpec converts SCORE specification into Humanitec deployment delta.
-func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.HumanitecExtensionsSpec) (*humanitec.CreateDeploymentDeltaRequest, error) {
+func ConvertSpec(name, envID string, managedByUrl string, spec *score.WorkloadSpec, ext *extensions.HumanitecExtensionsSpec) (*humanitec.CreateDeploymentDeltaRequest, error) {
 	ctx, err := buildContext(spec.Metadata, spec.Resources, ext.Resources)
 	if err != nil {
 		return nil, fmt.Errorf("preparing context: %w", err)
+	}
+	var annotations = make(map[string]interface{}, 1)
+
+	if managedByUrl != "" {
+		annotations[managedByAnnotation] = managedBy
+		annotations[workloadSourceAnnotation] = managedByUrl
 	}
 
 	var containers = make(map[string]interface{}, len(spec.Containers))
@@ -160,6 +166,9 @@ func ConvertSpec(name, envID string, spec *score.WorkloadSpec, ext *extensions.H
 
 	var workloadSpec = map[string]interface{}{
 		"containers": containers,
+	}
+	if len(annotations) > 0 {
+		workloadSpec["annotations"] = annotations
 	}
 	if len(spec.Service.Ports) > 0 {
 		var ports = map[string]interface{}{}

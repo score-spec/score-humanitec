@@ -74,7 +74,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec(message, envID, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, managedByUrl, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}

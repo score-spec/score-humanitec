@@ -35,6 +35,7 @@ func init() {
 	runCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
 	runCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
 	runCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
+	runCmd.Flags().StringVar(&managedByUrl, "managed-by", "", "URL of file that is managing the humanitec workload")
 	runCmd.Flags().StringVar(&envID, "env", "", "Environment ID")
 	runCmd.MarkFlagRequired("env")
 
@@ -68,7 +69,7 @@ func run(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec(message, envID, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, managedByUrl, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}

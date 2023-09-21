@@ -108,6 +108,7 @@ func TestScoreConvert(t *testing.T) {
 		Source     *score.WorkloadSpec
 		Extensions *extensions.HumanitecExtensionsSpec
 		Output     *humanitec.CreateDeploymentDeltaRequest
+		ManagedUrl string
 		Error      error
 	}{
 		{
@@ -169,6 +170,7 @@ func TestScoreConvert(t *testing.T) {
 				},
 			},
 			Extensions: &extensions.HumanitecExtensionsSpec{},
+			ManagedUrl: "",
 			Output: &humanitec.CreateDeploymentDeltaRequest{
 				Metadata: humanitec.DeltaMetadata{EnvID: envID, Name: name},
 				Modules: humanitec.ModuleDeltas{
@@ -352,6 +354,7 @@ func TestScoreConvert(t *testing.T) {
 					},
 				},
 			},
+			ManagedUrl: "test.com",
 			Output: &humanitec.CreateDeploymentDeltaRequest{
 				Metadata: humanitec.DeltaMetadata{EnvID: envID, Name: name},
 				Modules: humanitec.ModuleDeltas{
@@ -359,6 +362,10 @@ func TestScoreConvert(t *testing.T) {
 						"test": {
 							"profile": "test-org/test-module",
 							"spec": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"humanitec.io/managed-by":      "score-humanitec",
+									"humanitec.io/workload-source": "test.com",
+								},
 								"containers": map[string]interface{}{
 									"backend": map[string]interface{}{
 										"id": "backend",
@@ -444,7 +451,7 @@ func TestScoreConvert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			res, err := ConvertSpec(name, envID, tt.Source, tt.Extensions)
+			res, err := ConvertSpec(name, envID, tt.ManagedUrl, tt.Source, tt.Extensions)
 
 			if tt.Error != nil {
 				// On Error
