@@ -17,15 +17,16 @@ const (
 )
 
 var (
-	scoreFile      string
-	overridesFile  string
-	extensionsFile string
-	uiUrl          string
-	apiUrl         string
-	apiToken       string
-	orgID          string
-	appID          string
-	envID          string
+	scoreFile         string
+	overridesFile     string
+	extensionsFile    string
+	uiUrl             string
+	apiUrl            string
+	apiToken          string
+	orgID             string
+	appID             string
+	envID             string
+	workloadSourceURL string
 
 	overrideParams []string
 	message        string

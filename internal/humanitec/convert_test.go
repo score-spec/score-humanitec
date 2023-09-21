@@ -104,11 +104,12 @@ func TestScoreConvert(t *testing.T) {
 	)
 
 	var tests = []struct {
-		Name       string
-		Source     *score.WorkloadSpec
-		Extensions *extensions.HumanitecExtensionsSpec
-		Output     *humanitec.CreateDeploymentDeltaRequest
-		Error      error
+		Name              string
+		Source            *score.WorkloadSpec
+		Extensions        *extensions.HumanitecExtensionsSpec
+		Output            *humanitec.CreateDeploymentDeltaRequest
+		WorkloadSourceURL string
+		Error             error
 	}{
 		{
 			Name: "Should convert SCORE to deployment delta",
@@ -168,7 +169,8 @@ func TestScoreConvert(t *testing.T) {
 					},
 				},
 			},
-			Extensions: &extensions.HumanitecExtensionsSpec{},
+			Extensions:        &extensions.HumanitecExtensionsSpec{},
+			WorkloadSourceURL: "",
 			Output: &humanitec.CreateDeploymentDeltaRequest{
 				Metadata: humanitec.DeltaMetadata{EnvID: envID, Name: name},
 				Modules: humanitec.ModuleDeltas{
@@ -176,6 +178,9 @@ func TestScoreConvert(t *testing.T) {
 						"backend": {
 							"profile": "humanitec/default-module",
 							"spec": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"humanitec.io/managed-by": "score-humanitec",
+								},
 								"containers": map[string]interface{}{
 									"backend": map[string]interface{}{
 										"id":    "backend",
@@ -352,6 +357,7 @@ func TestScoreConvert(t *testing.T) {
 					},
 				},
 			},
+			WorkloadSourceURL: "https://test.com",
 			Output: &humanitec.CreateDeploymentDeltaRequest{
 				Metadata: humanitec.DeltaMetadata{EnvID: envID, Name: name},
 				Modules: humanitec.ModuleDeltas{
@@ -359,6 +365,10 @@ func TestScoreConvert(t *testing.T) {
 						"test": {
 							"profile": "test-org/test-module",
 							"spec": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"humanitec.io/managed-by":      "score-humanitec",
+									"humanitec.io/workload-source": "https://test.com",
+								},
 								"containers": map[string]interface{}{
 									"backend": map[string]interface{}{
 										"id": "backend",
@@ -444,7 +454,7 @@ func TestScoreConvert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			res, err := ConvertSpec(name, envID, tt.Source, tt.Extensions)
+			res, err := ConvertSpec(name, envID, tt.WorkloadSourceURL, tt.Source, tt.Extensions)
 
 			if tt.Error != nil {
 				// On Error
