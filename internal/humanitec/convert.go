@@ -122,7 +122,7 @@ func mergeFileContent(content interface{}, target string) (string, error) {
 	}
 }
 
-// convertFileMountSpec extracts a mount file detailf from the source spec.
+// convertFileMountSpec extracts a mount file details from the source spec.
 func convertFileMountSpec(f *score.FileMountSpec, context *templatesContext, baseDir string) (string, map[string]interface{}, error) {
 	var err error
 	var content string
