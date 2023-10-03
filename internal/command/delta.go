@@ -25,6 +25,7 @@ func init() {
 	deltaCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
 	deltaCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
 	deltaCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
+	deltaCmd.Flags().StringVar(&workloadSourceURL, "workload-source-url", "", "URL of file that is managing the humanitec workload")
 	deltaCmd.Flags().StringVar(&uiUrl, "ui-url", uiUrlDefault, "Humanitec UI")
 	deltaCmd.Flags().StringVar(&apiUrl, "api-url", apiUrlDefault, "Humanitec API endpoint")
 	deltaCmd.Flags().StringVar(&deltaID, "delta", "", "The ID of an existing delta in Humanitec into which to merge the generated delta")
@@ -74,7 +75,7 @@ func delta(cmd *cobra.Command, args []string) error {
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
-	delta, err := humanitec.ConvertSpec(message, envID, spec, ext)
+	delta, err := humanitec.ConvertSpec(message, envID, workloadSourceURL, spec, ext)
 	if err != nil {
 		return fmt.Errorf("preparing new deployment: %w", err)
 	}

@@ -15,6 +15,7 @@ func init() {
 	draftCmd.Flags().StringVarP(&scoreFile, "file", "f", scoreFileDefault, "Source SCORE file")
 	draftCmd.Flags().StringVar(&overridesFile, "overrides", overridesFileDefault, "Overrides file")
 	draftCmd.Flags().StringVar(&extensionsFile, "extensions", extensionsFileDefault, "Extensions file")
+	draftCmd.Flags().StringVar(&workloadSourceURL, "workload-source-url", "", "URL of file that is managing the humanitec workload")
 	draftCmd.Flags().StringVar(&uiUrl, "ui-url", uiUrlDefault, "Humanitec API endpoint")
 	draftCmd.Flags().StringVar(&apiUrl, "api-url", apiUrlDefault, "Humanitec API endpoint")
 	draftCmd.Flags().StringVar(&apiToken, "token", "", "Humanitec API authentication token")
