@@ -87,7 +87,27 @@ func (ctx *templatesContext) Substitute(src string) string {
 
 		return ctx.mapVar(matches[2])
 	})
+}
 
+// Escape replaces all matching '${...}' templates in a source string with '$\{...}'
+func (ctx *templatesContext) Escape(src string) string {
+	return placeholderRegEx.ReplaceAllStringFunc(src, func(str string) string {
+		// WORKAROUND: ReplaceAllStringFunc(..) does not provide match details
+		//             https://github.com/golang/go/issues/5690
+		var matches = placeholderRegEx.FindStringSubmatch(str)
+
+		// SANITY CHECK
+		if len(matches) != 3 {
+			log.Printf("Error: could not find a proper match in previously captured string fragment")
+			return src
+		}
+
+		if strings.HasPrefix(matches[1], "{") {
+			return fmt.Sprintf("$\\%s", matches[1])
+		}
+
+		return matches[0]
+	})
 }
 
 // MapVar replaces objects and properties references with corresponding values

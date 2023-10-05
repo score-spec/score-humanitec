@@ -64,6 +64,50 @@ func TestMapVar(t *testing.T) {
 	assert.Equal(t, "${nil.db.name}", ctx.mapVar("nil.db.name"))
 }
 
+func TestEscape(t *testing.T) {
+	var meta = score.WorkloadMeta{
+		Name: "test-name",
+	}
+
+	var resources = score.ResourcesSpecs{
+		"env": score.ResourceSpec{
+			Type: "environment",
+		},
+		"db": score.ResourceSpec{
+			Type: "postgres",
+		},
+		"dns": score.ResourceSpec{
+			Type: "dns",
+		},
+		"service-a": score.ResourceSpec{
+			Type: "service",
+		},
+	}
+
+	var ext = extensions.HumanitecResourcesSpecs{
+		"dns": {Scope: "shared"},
+	}
+
+	ctx, err := buildContext(meta, resources, ext)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "", ctx.Escape(""))
+	assert.Equal(t, "abc", ctx.Escape("abc"))
+	assert.Equal(t, "abc $$ abc", ctx.Escape("abc $$ abc"))
+	assert.Equal(t, "$abc", ctx.Escape("$abc"))
+	assert.Equal(t, "$${abc}", ctx.Escape("$${abc}"))
+
+	assert.Equal(t, "The name is '$\\{metadata.name}'", ctx.Escape("The name is '${metadata.name}'"))
+	assert.Equal(t, "The name is '$\\{metadata.nil}'", ctx.Escape("The name is '${metadata.nil}'"))
+
+	assert.Equal(t, "resources.env.DEBUG", ctx.Escape("resources.env.DEBUG"))
+
+	assert.Equal(t, "$\\{resources.db}", ctx.Escape("${resources.db}"))
+	assert.Equal(t,
+		"postgresql://$\\{resources.db.user}:$\\{resources.db.password}@$\\{resources.db.host}:$\\{resources.db.port}/$\\{resources.db.name}",
+		ctx.Escape("postgresql://${resources.db.user}:${resources.db.password}@${resources.db.host}:${resources.db.port}/${resources.db.name}"))
+}
+
 func TestSubstitute(t *testing.T) {
 	var meta = score.WorkloadMeta{
 		Name: "test-name",

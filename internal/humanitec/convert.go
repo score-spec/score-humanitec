@@ -136,7 +136,9 @@ func convertFileMountSpec(f *score.FileMountSpec, context *templatesContext, bas
 		return "", nil, err
 	}
 
-	if !f.NoExpand {
+	if f.NoExpand {
+		content = context.Escape(content)
+	} else {
 		content = context.Substitute(content)
 	}
 

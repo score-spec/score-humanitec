@@ -399,11 +399,11 @@ func TestScoreConvert(t *testing.T) {
 											},
 											"/etc/backend/config.yml": map[string]interface{}{
 												"mode":  "666",
-												"value": "DEBUG: ${resources.env.DEBUG}",
+												"value": "DEBUG: $\\{resources.env.DEBUG}",
 											},
 											"/etc/backend/config.txt": map[string]interface{}{
 												"mode":  "666",
-												"value": "Mounted\nFile\nContent\n${resources.env.DEBUG}",
+												"value": "Mounted\nFile\nContent\n$\\{resources.env.DEBUG}",
 											},
 										},
 										"volume_mounts": map[string]interface{}{
