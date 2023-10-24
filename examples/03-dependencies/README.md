@@ -2,7 +2,7 @@
 
 `Humanitec` makes sure that all the dependencies that the workload needs are up and available during the deployment. These could be other workloads and services, resources (such as database, or DNS records), or even whole environments, scripted with Terraform.
 
-In this example `score.yaml` file describes a workload that needs a `backend` (another workload), a PostgreSQL database instance, and a shared DNS record:
+In this example `score.yaml` file describes a workload that needs a `backend` (another workload), a PostgreSQL database instance for storing sensitive data, and a shared DNS record:
 
 ```yaml
 apiVersion: score.sh/v1b1
@@ -22,6 +22,7 @@ containers:
 resources:
   db:
     type: postgres
+    class: sensitive
   dns:
     type: dns
   backend:
@@ -59,7 +60,8 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
       "service-a": {
         "externals": {
           "db": {
-            "type": "postgres"
+            "type": "postgres",
+            "class": "sensitive"
           }
         },
         "profile": "humanitec/default-module",
@@ -97,4 +99,4 @@ Output JSON can be used as a payload for the [Create a new Delta](https://api-do
 }
 ```
 
-When deploying this service with `Humanitec`, make sure that all the dependencies are properly defined and configured for the target environment.
+When deploying this service with `Humanitec`, make sure that all the dependencies are properly defined and configured for the target environment. In the above example, you will need to define [resource definitions](https://developer.humanitec.com/platform-orchestrator/resources/resource-definitions/) for a [postgres](https://developer.humanitec.com/platform-orchestrator/reference/resource-types/#postgres) database that matches to a `sensitive` resource class, as well as for a [DNS](https://developer.humanitec.com/platform-orchestrator/reference/resource-types/#dns) name to ensure the provisioning of the required resources.
