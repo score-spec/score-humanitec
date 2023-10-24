@@ -15,6 +15,7 @@ containers:
 resources:
   db:
     type: postgres
+    class: sensitive
   dns:
     type: dns
   backend:

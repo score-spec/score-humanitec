@@ -312,7 +312,8 @@ func TestScoreConvert(t *testing.T) {
 								AnnotationLabelResourceId: "externals.annotations-db-id",
 							},
 						},
-						Type: "postgres",
+						Type:  "postgres",
+						Class: "large",
 						Params: map[string]interface{}{
 							"extensions": map[string]interface{}{
 								"uuid-ossp": map[string]interface{}{
@@ -433,10 +434,12 @@ func TestScoreConvert(t *testing.T) {
 							},
 							"externals": map[string]interface{}{
 								"data": map[string]interface{}{
-									"type": "volume",
+									"type":  "volume",
+									"class": "default",
 								},
 								"annotations-db-id": map[string]interface{}{
-									"type": "postgres",
+									"type":  "postgres",
+									"class": "large",
 									"params": map[string]interface{}{
 										"extensions": map[string]interface{}{
 											"uuid-ossp": map[string]interface{}{
@@ -447,7 +450,8 @@ func TestScoreConvert(t *testing.T) {
 									},
 								},
 								"route": map[string]interface{}{
-									"type": "route",
+									"type":  "route",
+									"class": "default",
 									"params": map[string]interface{}{
 										"host": "${shared.dns.host}",
 									},
@@ -461,7 +465,8 @@ func TestScoreConvert(t *testing.T) {
 						Operation: "add",
 						Path:      "/dns",
 						Value: map[string]interface{}{
-							"type": "dns",
+							"type":  "dns",
+							"class": "default",
 							"params": map[string]interface{}{
 								"test": "value",
 							},
