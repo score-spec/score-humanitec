@@ -17,6 +17,10 @@ github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6Ng
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
 github.com/score-spec/score-go v0.0.0-20230905115428-131acdd2f5cf h1:0Dt+qyYoGTXPPU5Xq/KxLDtQMMA8hX+oJ8EsjFWUajQ=
 github.com/score-spec/score-go v0.0.0-20230905115428-131acdd2f5cf/go.mod h1:3l9mvrtYKzxXDQVcYkQBD3ABTPkTzWhUMYNfGlpctoo=
+github.com/score-spec/score-go v0.0.0-20231024093959-ed5a5d548352 h1:yycML7iVHv/65wo4ao7uH5cvIYgQhB184iKAy7suNBk=
+github.com/score-spec/score-go v0.0.0-20231024093959-ed5a5d548352/go.mod h1:3l9mvrtYKzxXDQVcYkQBD3ABTPkTzWhUMYNfGlpctoo=
+github.com/score-spec/score-go v0.0.0-20231024094556-308a07ae2536 h1:WBWWWSbAR2oJapUZyCm4IZ5LJfkT5IUlHtmcJNBLFiY=
+github.com/score-spec/score-go v0.0.0-20231024094556-308a07ae2536/go.mod h1:3l9mvrtYKzxXDQVcYkQBD3ABTPkTzWhUMYNfGlpctoo=
 github.com/sendgrid/rest v2.6.9+incompatible h1:1EyIcsNdn9KIisLW50MKwmSRSK+ekueiEMJ7NEoxJo0=
 github.com/sendgrid/rest v2.6.9+incompatible/go.mod h1:kXX7q3jZtJXK5c5qK83bSGMdV6tsOE70KbHoqJls4lE=
 github.com/spf13/cobra v1.6.0 h1:42a0n6jwCot1pUmomAp4T7DeMD+20LFv4Q54pxLf2LI=

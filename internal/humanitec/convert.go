@@ -298,13 +298,17 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 				}
 			}
 			// END (DEPRECATED)
-
+			var class = "default"
+			if res.Class != "" {
+				class = res.Class
+			}
 			if mod, scope, resName, err := parseResourceId(resId); err != nil {
 				log.Printf("Warning: %v.\n", err)
 			} else if mod == "" || mod == spec.Metadata.Name {
 				if scope == "externals" {
 					var extRes = map[string]interface{}{
-						"type": res.Type,
+						"type":  res.Type,
+						"class": class,
 					}
 					if len(res.Params) > 0 {
 						extRes["params"] = ctx.SubstituteAll(res.Params)
@@ -313,7 +317,8 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 				} else if scope == "shared" {
 					var resName = strings.Replace(resId, "shared.", "", 1)
 					var sharedRes = map[string]interface{}{
-						"type": res.Type,
+						"type":  res.Type,
+						"class": class,
 					}
 					if len(res.Params) > 0 {
 						sharedRes["params"] = ctx.SubstituteAll(res.Params)
