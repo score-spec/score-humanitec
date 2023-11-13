@@ -67,6 +67,6 @@ func (api *apiClient) StartDeployment(ctx context.Context, orgID, appID, envID s
 
 		fallthrough
 	default:
-		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
+		return nil, resError(req, resp)
 	}
 }

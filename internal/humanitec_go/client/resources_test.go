@@ -88,7 +88,8 @@ func TestListResourceTypes(t *testing.T) {
 		{
 			Name:          "Should handle API errors",
 			StatusCode:    http.StatusInternalServerError,
-			ExpectedError: errors.New("HTTP 500"),
+			ExpectedError: errors.New("unexpected response status 500 - Internal Server Error\nerror details"),
+			Response:      []byte(`error details`),
 		},
 		{
 			Name:          "Should handle response parsing errors",

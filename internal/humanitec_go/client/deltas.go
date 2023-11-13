@@ -57,7 +57,7 @@ func (api *apiClient) CreateDelta(ctx context.Context, orgID, appID string, delt
 		}
 
 	default:
-		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
+		return nil, resError(req, resp)
 	}
 }
 
@@ -100,6 +100,10 @@ func (api *apiClient) UpdateDelta(ctx context.Context, orgID string, appID strin
 			return &res, nil
 		}
 	default:
-		return nil, fmt.Errorf("humanitec api: %s %s: HTTP %d - %s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode))
+		return nil, resError(req, resp)
 	}
+}
+
+func resError(req rest.Request, resp *rest.Response) error {
+	return fmt.Errorf("humanitec api: %s %s: unexpected response status %d - %s\n%s", req.Method, req.BaseURL, resp.StatusCode, http.StatusText(resp.StatusCode), resp.Body)
 }
