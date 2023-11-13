@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/score-spec/score-humanitec/internal/humanitec"
 	api "github.com/score-spec/score-humanitec/internal/humanitec_go/client"
@@ -74,6 +75,11 @@ func delta(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Validate the ID
+	if err := validateIDs(); err != nil {
+		return err
+	}
+
 	// Prepare a new deployment
 	//
 	log.Print("Preparing a new deployment...\n")
@@ -119,6 +125,25 @@ func delta(cmd *cobra.Command, args []string) error {
 		})
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+var validID = regexp.MustCompile(`^[a-z0-9](?:-?[a-z0-9]+)+$`)
+
+func validateIDs() error {
+	ids := []struct {
+		name string
+		id   string
+	}{
+		{"organization", orgID}, {"application", appID}, {"environment", envID},
+	}
+
+	for _, e := range ids {
+		if !validID.MatchString(e.id) {
+			return fmt.Errorf("invalid %s id '%s'. Did you use the %s name instead of the id?", e.name, e.id, e.name)
 		}
 	}
 

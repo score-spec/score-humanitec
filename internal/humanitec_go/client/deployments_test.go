@@ -83,7 +83,8 @@ func TestStartDeployment(t *testing.T) {
 		{
 			Name:          "Should handle API errors",
 			StatusCode:    []int{http.StatusInternalServerError},
-			ExpectedError: errors.New("HTTP 500"),
+			Response:      []byte(`error details`),
+			ExpectedError: errors.New("unexpected response status 500 - Internal Server Error\nerror details"),
 		},
 		{
 			Name:          "Should handle response parsing errors",
@@ -99,7 +100,8 @@ func TestStartDeployment(t *testing.T) {
 			},
 			Retry:         false,
 			StatusCode:    []int{http.StatusConflict},
-			ExpectedError: errors.New("HTTP 409"),
+			Response:      []byte(`conflict details`),
+			ExpectedError: errors.New("unexpected response status 409 - Conflict\nconflict details"),
 		},
 		{
 			Name: "Should retry conflict errors with retry",

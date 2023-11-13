@@ -87,7 +87,8 @@ func TestCreateDelta(t *testing.T) {
 		{
 			Name:          "Should handle API errors",
 			StatusCode:    http.StatusInternalServerError,
-			ExpectedError: errors.New("HTTP 500"),
+			ExpectedError: errors.New("unexpected response status 500 - Internal Server Error\nerror details"),
+			Response:      []byte(`error details`),
 		},
 		{
 			Name:          "Should handle response parsing errors",
@@ -208,6 +209,7 @@ func TestUpdateDelta_fail(t *testing.T) {
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte("{\"error\": \"Not Found\"}"))
 			},
 		),
 	)
@@ -219,5 +221,5 @@ func TestUpdateDelta_fail(t *testing.T) {
 		{Modules: humanitec.ModuleDeltas{}},
 	})
 	assert.Nil(t, res)
-	assert.ErrorContains(t, err, ": HTTP 404 - Not Found")
+	assert.ErrorContains(t, err, ": unexpected response status 404 - Not Found\n{\"error\": \"Not Found\"}")
 }
