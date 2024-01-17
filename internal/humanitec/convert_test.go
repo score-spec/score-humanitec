@@ -255,6 +255,7 @@ func TestScoreConvert(t *testing.T) {
 							"CONNECTION_STRING": "postgresql://${resources.db.host}:${resources.db.port}/${resources.db.name}",
 							"DOMAIN_NAME":       "${resources.dns.domain}",
 							"EXTERNAL_RESOURCE": "${resources.external-resource.name}",
+							"SENSITIVE_BUCKET":  "${resources.sensitive-bucket.name}",
 						},
 						Files: []score.FileMountSpec{
 							{
@@ -340,6 +341,15 @@ func TestScoreConvert(t *testing.T) {
 							"host": "${resources.dns.host}",
 						},
 					},
+					"sensitive-bucket": {
+						Metadata: score.ResourceMeta{
+							Annotations: map[string]string{
+								AnnotationLabelResourceId: "shared.sensitive-bucket",
+							},
+						},
+						Type:  "bucket",
+						Class: "sensitive",
+					},
 				},
 			},
 			Extensions: &extensions.HumanitecExtensionsSpec{
@@ -392,6 +402,7 @@ func TestScoreConvert(t *testing.T) {
 											"CONNECTION_STRING": "postgresql://${externals.annotations-db-id.host}:${externals.annotations-db-id.port}/${externals.annotations-db-id.name}",
 											"DOMAIN_NAME":       "${shared.dns.domain}",
 											"EXTERNAL_RESOURCE": "${modules.test-module.externals.test-resource.name}",
+											"SENSITIVE_BUCKET":  "${shared.sensitive-bucket-class-sensitive.name}",
 										},
 										"files": map[string]interface{}{
 											"/etc/backend/config.yaml": map[string]interface{}{
@@ -463,6 +474,15 @@ func TestScoreConvert(t *testing.T) {
 				Shared: []humanitec.UpdateAction{
 					{
 						Operation: "add",
+						Path:      "/sensitive-bucket-class-sensitive",
+						Value: map[string]interface{}{
+							"type":  "bucket",
+							"class": "sensitive",
+							"id":    "shared.sensitive-bucket",
+						},
+					},
+					{
+						Operation: "add",
 						Path:      "/dns",
 						Value: map[string]interface{}{
 							"type":  "dns",
@@ -489,7 +509,12 @@ func TestScoreConvert(t *testing.T) {
 				// On Success
 				//
 				assert.NoError(t, err)
+				expectedShared := tt.Output.Shared
+				tt.Output.Shared = nil
+				actualShared := res.Shared
+				res.Shared = nil
 				assert.Equal(t, tt.Output, res)
+				assert.ElementsMatch(t, expectedShared, actualShared)
 			}
 		})
 	}

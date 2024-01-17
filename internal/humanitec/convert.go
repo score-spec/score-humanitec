@@ -323,6 +323,10 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 					if len(res.Params) > 0 {
 						sharedRes["params"] = ctx.SubstituteAll(res.Params)
 					}
+					if class != "default" {
+						sharedRes["id"] = resId
+						resName = resName + "-class-" + class
+					}
 					shared = append(shared, humanitec.UpdateAction{
 						Operation: "add",
 						Path:      "/" + resName,
