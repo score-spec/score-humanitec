@@ -153,7 +153,7 @@ func (ctx *templatesContext) mapVar(ref string) string {
 					// END (DEPRECATED)
 
 					if hasAnnotation && strings.HasPrefix(resId, "shared.") && (res.Class != "" && res.Class != "default") {
-						resId = "shared." + resName + "-class-" + res.Class
+						resId = resId + "-class-" + res.Class
 					}
 
 					if resId != "" {
