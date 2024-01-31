@@ -29,6 +29,7 @@ var (
 	workloadSourceURL string
 
 	overrideParams []string
+	currentImage   string
 	message        string
 
 	// deltaID is a cli flag receiver used to support "score-humanitec delta --use foo"
