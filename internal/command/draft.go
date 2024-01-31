@@ -28,6 +28,7 @@ func init() {
 	draftCmd.MarkFlagRequired("env")
 
 	draftCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+	draftCmd.Flags().StringVarP(&currentImage, "image", "i", ".", "Image to use for the current image, signified by \".\"")
 
 	draftCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new draft deployment at the end")
 	draftCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable diagnostic messages (written to STDERR)")

@@ -42,6 +42,7 @@ func init() {
 	deltaCmd.MarkFlagRequired("env")
 
 	deltaCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+	deltaCmd.Flags().StringVarP(&currentImage, "image", "i", ".", "Image to use for the current image, signified by \".\"")
 	deltaCmd.Flags().StringVarP(&message, "message", "m", messageDefault, "Message")
 
 	deltaCmd.Flags().BoolVar(&deploy, "deploy", false, "Trigger a new delta deployment at the end")

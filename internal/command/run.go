@@ -39,6 +39,7 @@ func init() {
 	runCmd.MarkFlagRequired("env")
 
 	runCmd.Flags().StringArrayVarP(&overrideParams, "property", "p", nil, "Overrides selected property value")
+	runCmd.Flags().StringVarP(&currentImage, "image", "i", ".", "Image to use for the current image, signified by \".\"")
 	runCmd.Flags().StringVarP(&message, "message", "m", messageDefault, "Message")
 
 	runCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "DEPRECATED: Disables Score file schema validation.")
@@ -155,6 +156,18 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 
 		if err = json.Unmarshal(jsonBytes, &srcMap); err != nil {
 			return nil, nil, fmt.Errorf("unmarshalling score spec: %w", err)
+		}
+	}
+
+	// Replace images defined by . (optional)
+	//
+	if containers, ok := srcMap["containers"].(map[string]interface{}); ok {
+		for _, containerVal := range containers {
+			if container, ok := containerVal.(map[string]interface{}); ok {
+				if image, ok := container["image"].(string); ok && image == "." {
+					container["image"] = currentImage
+				}
+			}
 		}
 	}
 
