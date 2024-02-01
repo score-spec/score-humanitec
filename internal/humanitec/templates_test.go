@@ -126,6 +126,23 @@ func TestSubstitute(t *testing.T) {
 		"service-a": score.ResourceSpec{
 			Type: "service",
 		},
+		"shared-res": score.ResourceSpec{
+			Type: "s3",
+			Metadata: score.ResourceMeta{
+				Annotations: map[string]string{
+					AnnotationLabelResourceId: "shared.main-s3",
+				},
+			},
+		},
+		"shared-res-admin": score.ResourceSpec{
+			Type:  "s3",
+			Class: "admin",
+			Metadata: score.ResourceMeta{
+				Annotations: map[string]string{
+					AnnotationLabelResourceId: "shared.main-s3",
+				},
+			},
+		},
 	}
 
 	var ext = extensions.HumanitecResourcesSpecs{
@@ -150,6 +167,9 @@ func TestSubstitute(t *testing.T) {
 	assert.Equal(t,
 		"postgresql://${externals.db.user}:${externals.db.password}@${externals.db.host}:${externals.db.port}/${externals.db.name}",
 		ctx.Substitute("postgresql://${resources.db.user}:${resources.db.password}@${resources.db.host}:${resources.db.port}/${resources.db.name}"))
+
+	assert.Equal(t, "${shared.main-s3.name}", ctx.Substitute("${resources.shared-res.name}"))
+	assert.Equal(t, "${shared.main-s3-class-admin.name}", ctx.Substitute("${resources.shared-res-admin.name}"))
 }
 
 func TestSubstituteAll(t *testing.T) {
