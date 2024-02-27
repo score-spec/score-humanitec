@@ -18,10 +18,11 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
-	"github.com/score-spec/score-humanitec/internal/humanitec"
-	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/sjson"
+
+	"github.com/score-spec/score-humanitec/internal/humanitec"
+	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -86,7 +87,7 @@ func run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bool) (*score.WorkloadSpec, *extensions.HumanitecExtensionsSpec, error) {
+func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bool) (*score.Workload, *extensions.HumanitecExtensionsSpec, error) {
 	// Open source file
 	//
 	log.Printf("Reading '%s'...\n", scoreFile)
@@ -188,6 +189,15 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 		}
 	}
 
+	// Apply upgrades to fix backports or backward incompatible things
+	if changes, err := schema.ApplyCommonUpgradeTransforms(srcMap); err != nil {
+		return nil, nil, fmt.Errorf("failed to upgrade spec: %w", err)
+	} else if len(changes) > 0 {
+		for _, change := range changes {
+			log.Printf("Applying upgrade to specification: %s\n", change)
+		}
+	}
+
 	// Validate SCORE spec
 	//
 	if !skipValidation {
@@ -200,7 +210,7 @@ func loadSpec(scoreFile, overridesFile, extensionsFile string, skipValidation bo
 	// Convert SCORE spec
 	//
 
-	var spec score.WorkloadSpec
+	var spec score.Workload
 	log.Print("Applying SCORE spec...\n")
 	if err = mapstructure.Decode(srcMap, &spec); err != nil {
 		return nil, nil, fmt.Errorf("applying workload spec: %w", err)
