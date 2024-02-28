@@ -12,9 +12,10 @@ import (
 	"testing"
 
 	score "github.com/score-spec/score-go/types"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestParseResourceId(t *testing.T) {
@@ -105,7 +106,7 @@ func TestScoreConvert(t *testing.T) {
 
 	var tests = []struct {
 		Name              string
-		Source            *score.WorkloadSpec
+		Source            *score.Workload
 		Extensions        *extensions.HumanitecExtensionsSpec
 		Output            *humanitec.CreateDeploymentDeltaRequest
 		WorkloadSourceURL string
@@ -113,23 +114,23 @@ func TestScoreConvert(t *testing.T) {
 	}{
 		{
 			Name: "Should convert SCORE to deployment delta",
-			Source: &score.WorkloadSpec{
-				Metadata: score.WorkloadMeta{
-					Name: "backend",
+			Source: &score.Workload{
+				Metadata: score.WorkloadMetadata{
+					"name": "backend",
 				},
-				Service: score.ServiceSpec{
-					Ports: score.ServicePortsSpecs{
-						"www": score.ServicePortSpec{
+				Service: &score.WorkloadService{
+					Ports: score.WorkloadServicePorts{
+						"www": score.ServicePort{
 							Port:       80,
-							TargetPort: 8080,
+							TargetPort: Ref(8080),
 						},
-						"admin": score.ServicePortSpec{
+						"admin": score.ServicePort{
 							Port: 8080,
 						},
 					},
 				},
-				Containers: score.ContainersSpecs{
-					"backend": score.ContainerSpec{
+				Containers: score.WorkloadContainers{
+					"backend": score.Container{
 						Image: "busybox",
 						Command: []string{
 							"/bin/sh",
@@ -141,28 +142,28 @@ func TestScoreConvert(t *testing.T) {
 						Variables: map[string]string{
 							"CONNECTION_STRING": "test connection string",
 						},
-						Resources: score.ContainerResourcesRequirementsSpec{
-							Limits: map[string]interface{}{
-								"memory": "128Mi",
-								"cpu":    "500m",
+						Resources: &score.ContainerResources{
+							Limits: &score.ResourcesLimits{
+								Memory: Ref("128Mi"),
+								Cpu:    Ref("500m"),
 							},
-							Requests: map[string]interface{}{
-								"memory": "64Mi",
-								"cpu":    "250m",
+							Requests: &score.ResourcesLimits{
+								Memory: Ref("64Mi"),
+								Cpu:    Ref("250m"),
 							},
 						},
-						LivenessProbe: score.ContainerProbeSpec{
-							HTTPGet: score.HTTPGetActionSpec{
+						LivenessProbe: &score.ContainerProbe{
+							HttpGet: score.HttpProbe{
 								Path: "/alive",
 								Port: 8080,
 							},
 						},
-						ReadinessProbe: score.ContainerProbeSpec{
-							HTTPGet: score.HTTPGetActionSpec{
+						ReadinessProbe: &score.ContainerProbe{
+							HttpGet: score.HttpProbe{
 								Path: "/health",
 								Port: 8080,
-								HTTPHeaders: []score.HTTPHeaderSpec{
-									{Name: "Custom-Header", Value: "Ops!"},
+								HttpHeaders: []score.HttpProbeHttpHeadersElem{
+									{Name: Ref("Custom-Header"), Value: Ref("Ops!")},
 								},
 							},
 						},
@@ -242,12 +243,12 @@ func TestScoreConvert(t *testing.T) {
 		},
 		{
 			Name: "Should convert all resources references",
-			Source: &score.WorkloadSpec{
-				Metadata: score.WorkloadMeta{
-					Name: "test",
+			Source: &score.Workload{
+				Metadata: score.WorkloadMetadata{
+					"name": "test",
 				},
-				Containers: score.ContainersSpecs{
-					"backend": score.ContainerSpec{
+				Containers: score.WorkloadContainers{
+					"backend": score.Container{
 						Variables: map[string]string{
 							"DEBUG":             "${resources.env.DEBUG}",
 							"LOGS_LEVEL":        "${pod.debug.level}",
@@ -257,42 +258,41 @@ func TestScoreConvert(t *testing.T) {
 							"EXTERNAL_RESOURCE": "${resources.external-resource.name}",
 							"SENSITIVE_BUCKET":  "${resources.sensitive-bucket.name}",
 						},
-						Files: []score.FileMountSpec{
+						Files: []score.ContainerFilesElem{
 							{
 								Target: "/etc/backend/config.yaml",
-								Mode:   "666",
-								Content: []interface{}{
-									"---",
-									"DEBUG: ${resources.env.DEBUG}",
-								},
+								Mode:   Ref("666"),
+								Content: Ref(`---
+DEBUG: ${resources.env.DEBUG}
+`),
 							},
 							{
 								Target:   "/etc/backend/config.yml",
-								Mode:     "666",
-								Content:  "DEBUG: ${resources.env.DEBUG}",
-								NoExpand: true,
+								Mode:     Ref("666"),
+								Content:  Ref("DEBUG: ${resources.env.DEBUG}"),
+								NoExpand: Ref(true),
 							},
 							{
 								Target:   "/etc/backend/config.txt",
-								Mode:     "666",
-								Source:   "testdata/config.txt",
-								NoExpand: true,
+								Mode:     Ref("666"),
+								Source:   Ref("testdata/config.txt"),
+								NoExpand: Ref(true),
 							},
 						},
-						Volumes: []score.VolumeMountSpec{
+						Volumes: []score.ContainerVolumesElem{
 							{
 								Source:   "${resources.data}",
-								Path:     "sub/path",
+								Path:     Ref("sub/path"),
 								Target:   "/mnt/data",
-								ReadOnly: true,
+								ReadOnly: Ref(true),
 							},
 						},
 					},
 				},
-				Resources: map[string]score.ResourceSpec{
+				Resources: map[string]score.Resource{
 					"env": {
-						Metadata: score.ResourceMeta{
-							Annotations: map[string]string{
+						Metadata: score.ResourceMetadata{
+							"annotations": map[string]interface{}{
 								AnnotationLabelResourceId: "externals.should-ignore-this-one",
 							},
 						},
@@ -308,13 +308,13 @@ func TestScoreConvert(t *testing.T) {
 						Type: "volume",
 					},
 					"db": {
-						Metadata: score.ResourceMeta{
-							Annotations: map[string]string{
+						Metadata: score.ResourceMetadata{
+							"annotations": map[string]interface{}{
 								AnnotationLabelResourceId: "externals.annotations-db-id",
 							},
 						},
 						Type:  "postgres",
-						Class: "large",
+						Class: Ref("large"),
 						Params: map[string]interface{}{
 							"extensions": map[string]interface{}{
 								"uuid-ossp": map[string]interface{}{
@@ -328,8 +328,8 @@ func TestScoreConvert(t *testing.T) {
 						Type: "service",
 					},
 					"external-resource": {
-						Metadata: score.ResourceMeta{
-							Annotations: map[string]string{
+						Metadata: score.ResourceMetadata{
+							"annotations": map[string]interface{}{
 								AnnotationLabelResourceId: "modules.test-module.externals.test-resource",
 							},
 						},
@@ -342,13 +342,13 @@ func TestScoreConvert(t *testing.T) {
 						},
 					},
 					"sensitive-bucket": {
-						Metadata: score.ResourceMeta{
-							Annotations: map[string]string{
+						Metadata: score.ResourceMetadata{
+							"annotations": map[string]interface{}{
 								AnnotationLabelResourceId: "shared.sensitive-bucket",
 							},
 						},
 						Type:  "bucket",
-						Class: "sensitive",
+						Class: Ref("sensitive"),
 					},
 				},
 			},
@@ -407,7 +407,7 @@ func TestScoreConvert(t *testing.T) {
 										"files": map[string]interface{}{
 											"/etc/backend/config.yaml": map[string]interface{}{
 												"mode":  "666",
-												"value": "---\nDEBUG: ${values.DEBUG}",
+												"value": "---\nDEBUG: ${values.DEBUG}\n",
 											},
 											"/etc/backend/config.yml": map[string]interface{}{
 												"mode":  "666",

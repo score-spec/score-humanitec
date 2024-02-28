@@ -16,6 +16,7 @@ import (
 
 	mergo "github.com/imdario/mergo"
 	score "github.com/score-spec/score-go/types"
+
 	extensions "github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 	humanitec "github.com/score-spec/score-humanitec/internal/humanitec_go/types"
 )
@@ -64,21 +65,23 @@ func parseResourceId(ref string) (workload, scope, resId string, err error) {
 
 // getProbeDetails extracts an httpGet probe details from the source spec.
 // Returns nil if the source spec is empty.
-func getProbeDetails(probe *score.ContainerProbeSpec) map[string]interface{} {
-	if probe.HTTPGet.Path == "" {
+func getProbeDetails(probe *score.ContainerProbe) map[string]interface{} {
+	if probe.HttpGet.Path == "" {
 		return nil
 	}
 
 	var res = map[string]interface{}{
 		"type": "http",
-		"path": probe.HTTPGet.Path,
-		"port": probe.HTTPGet.Port,
+		"path": probe.HttpGet.Path,
+		"port": probe.HttpGet.Port,
 	}
 
-	if len(probe.HTTPGet.HTTPHeaders) > 0 {
+	if len(probe.HttpGet.HttpHeaders) > 0 {
 		var hdrs = map[string]string{}
-		for _, hdr := range probe.HTTPGet.HTTPHeaders {
-			hdrs[hdr.Name] = hdr.Value
+		for _, hdr := range probe.HttpGet.HttpHeaders {
+			if hdr.Name != nil && hdr.Value != nil {
+				hdrs[*hdr.Name] = *hdr.Value
+			}
 		}
 		res["headers"] = hdrs
 	}
@@ -123,20 +126,22 @@ func mergeFileContent(content interface{}, target string) (string, error) {
 }
 
 // convertFileMountSpec extracts a mount file details from the source spec.
-func convertFileMountSpec(f *score.FileMountSpec, context *templatesContext, baseDir string) (string, map[string]interface{}, error) {
+func convertFileMountSpec(f *score.ContainerFilesElem, context *templatesContext, baseDir string) (string, map[string]interface{}, error) {
 	var err error
 	var content string
 
-	if f.Source != "" {
-		content, err = readFile(baseDir, f.Source)
+	if f.Source != nil {
+		content, err = readFile(baseDir, *f.Source)
+	} else if f.Content != nil {
+		content, err = mergeFileContent(*f.Content, f.Target)
 	} else {
-		content, err = mergeFileContent(f.Content, f.Target)
+		err = fmt.Errorf("file is missing source or content")
 	}
 	if err != nil {
 		return "", nil, err
 	}
 
-	if f.NoExpand {
+	if f.NoExpand != nil && *f.NoExpand {
 		content = context.Escape(content)
 	} else {
 		content = context.Substitute(content)
@@ -144,14 +149,14 @@ func convertFileMountSpec(f *score.FileMountSpec, context *templatesContext, bas
 
 	return f.Target,
 		map[string]interface{}{
-			"mode":  f.Mode,
+			"mode":  DerefOr(f.Mode, ""),
 			"value": content,
 		},
 		nil
 }
 
 // convertContainerSpec extracts a container details from the source spec.
-func convertContainerSpec(name string, spec *score.ContainerSpec, context *templatesContext, baseDir string) (map[string]interface{}, error) {
+func convertContainerSpec(name string, spec *score.Container, context *templatesContext, baseDir string) (map[string]interface{}, error) {
 	var containerSpec = map[string]interface{}{
 		"id": name,
 	}
@@ -171,17 +176,27 @@ func convertContainerSpec(name string, spec *score.ContainerSpec, context *templ
 		}
 		containerSpec["variables"] = envVars
 	}
-	if len(spec.Resources.Requests) > 0 || len(spec.Resources.Limits) > 0 {
-		containerSpec["resources"] = map[string]interface{}{
-			"requests": spec.Resources.Requests,
-			"limits":   spec.Resources.Limits,
+	if spec.Resources != nil {
+		containerResources := make(map[string]interface{})
+		if out := getContainerResources(spec.Resources.Limits); len(out) > 0 {
+			containerResources["limits"] = out
+		}
+		if out := getContainerResources(spec.Resources.Requests); len(out) > 0 {
+			containerResources["requests"] = out
+		}
+		if len(containerResources) > 0 {
+			containerSpec["resources"] = containerResources
 		}
 	}
-	if probe := getProbeDetails(&spec.LivenessProbe); len(probe) > 0 {
-		containerSpec["liveness_probe"] = probe
+	if spec.LivenessProbe != nil {
+		if probe := getProbeDetails(spec.LivenessProbe); len(probe) > 0 {
+			containerSpec["liveness_probe"] = probe
+		}
 	}
-	if probe := getProbeDetails(&spec.ReadinessProbe); len(probe) > 0 {
-		containerSpec["readiness_probe"] = probe
+	if spec.ReadinessProbe != nil {
+		if probe := getProbeDetails(spec.ReadinessProbe); len(probe) > 0 {
+			containerSpec["readiness_probe"] = probe
+		}
 	}
 	if len(spec.Files) > 0 {
 		var files = map[string]interface{}{}
@@ -199,8 +214,8 @@ func convertContainerSpec(name string, spec *score.ContainerSpec, context *templ
 		for _, vol := range spec.Volumes {
 			volumes[vol.Target] = map[string]interface{}{
 				"id":        context.Substitute(vol.Source),
-				"sub_path":  vol.Path,
-				"read_only": vol.ReadOnly,
+				"sub_path":  DerefOr(vol.Path, ""),
+				"read_only": DerefOr(vol.ReadOnly, false),
 			}
 		}
 		containerSpec["volume_mounts"] = volumes
@@ -209,8 +224,19 @@ func convertContainerSpec(name string, spec *score.ContainerSpec, context *templ
 	return containerSpec, nil
 }
 
+func getContainerResources(requests *score.ResourcesLimits) map[string]interface{} {
+	out := make(map[string]interface{})
+	if requests.Cpu != nil {
+		out["cpu"] = *requests.Cpu
+	}
+	if requests.Memory != nil {
+		out["memory"] = *requests.Memory
+	}
+	return out
+}
+
 // ConvertSpec converts SCORE specification into Humanitec deployment delta.
-func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.WorkloadSpec, ext *extensions.HumanitecExtensionsSpec) (*humanitec.CreateDeploymentDeltaRequest, error) {
+func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Workload, ext *extensions.HumanitecExtensionsSpec) (*humanitec.CreateDeploymentDeltaRequest, error) {
 	ctx, err := buildContext(spec.Metadata, spec.Resources, ext.Resources)
 	if err != nil {
 		return nil, fmt.Errorf("preparing context: %w", err)
@@ -235,21 +261,13 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 		"annotations": annotations,
 		"containers":  containers,
 	}
-	if len(spec.Service.Ports) > 0 {
+	if spec.Service != nil && len(spec.Service.Ports) > 0 {
 		var ports = map[string]interface{}{}
 		for pName, pSpec := range spec.Service.Ports {
-			var proto = pSpec.Protocol
-			if proto == "" {
-				proto = "TCP" // Defaults to "TCP"
-			}
-			var targetPport = pSpec.TargetPort
-			if targetPport == 0 {
-				targetPport = pSpec.Port // Defaults to the published port
-			}
 			ports[pName] = map[string]interface{}{
-				"protocol":       proto,
+				"protocol":       string(DerefOr(pSpec.Protocol, score.ServicePortProtocolTCP)),
 				"service_port":   pSpec.Port,
-				"container_port": targetPport,
+				"container_port": DerefOr(pSpec.TargetPort, pSpec.Port),
 			}
 		}
 		workloadSpec["service"] = map[string]interface{}{
@@ -283,7 +301,8 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 			continue
 
 		default:
-			resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+			resAnnotations, _ := res.Metadata["annotations"].(map[string]interface{})
+			resId, hasAnnotation := resAnnotations[AnnotationLabelResourceId].(string)
 			if resId == "" {
 				resId = fmt.Sprintf("externals.%s", name)
 			}
@@ -298,13 +317,10 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 				}
 			}
 			// END (DEPRECATED)
-			var class = "default"
-			if res.Class != "" {
-				class = res.Class
-			}
+			var class = DerefOr(res.Class, "default")
 			if mod, scope, resName, err := parseResourceId(resId); err != nil {
 				log.Printf("Warning: %v.\n", err)
-			} else if mod == "" || mod == spec.Metadata.Name {
+			} else if mod == "" || mod == spec.Metadata["name"].(string) {
 				if scope == "externals" {
 					var extRes = map[string]interface{}{
 						"type":  res.Type,
@@ -349,7 +365,7 @@ func ConvertSpec(name, envID, baseDir, workloadSourceURL string, spec *score.Wor
 		},
 		Modules: humanitec.ModuleDeltas{
 			Add: map[string]map[string]interface{}{
-				spec.Metadata.Name: workload,
+				spec.Metadata["name"].(string): workload,
 			},
 		},
 	}

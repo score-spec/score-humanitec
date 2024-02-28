@@ -17,21 +17,21 @@ import (
 )
 
 func TestMapVar(t *testing.T) {
-	var meta = score.WorkloadMeta{
-		Name: "test-name",
+	var meta = score.WorkloadMetadata{
+		"name": "test-name",
 	}
 
-	var resources = score.ResourcesSpecs{
-		"env": score.ResourceSpec{
+	var resources = score.WorkloadResources{
+		"env": score.Resource{
 			Type: "environment",
 		},
-		"db": score.ResourceSpec{
+		"db": score.Resource{
 			Type: "postgres",
 		},
-		"dns": score.ResourceSpec{
+		"dns": score.Resource{
 			Type: "dns",
 		},
-		"service-a": score.ResourceSpec{
+		"service-a": score.Resource{
 			Type: "service",
 		},
 	}
@@ -65,21 +65,21 @@ func TestMapVar(t *testing.T) {
 }
 
 func TestEscape(t *testing.T) {
-	var meta = score.WorkloadMeta{
-		Name: "test-name",
+	var meta = score.WorkloadMetadata{
+		"name": "test-name",
 	}
 
-	var resources = score.ResourcesSpecs{
-		"env": score.ResourceSpec{
+	var resources = score.WorkloadResources{
+		"env": score.Resource{
 			Type: "environment",
 		},
-		"db": score.ResourceSpec{
+		"db": score.Resource{
 			Type: "postgres",
 		},
-		"dns": score.ResourceSpec{
+		"dns": score.Resource{
 			Type: "dns",
 		},
-		"service-a": score.ResourceSpec{
+		"service-a": score.Resource{
 			Type: "service",
 		},
 	}
@@ -109,36 +109,36 @@ func TestEscape(t *testing.T) {
 }
 
 func TestSubstitute(t *testing.T) {
-	var meta = score.WorkloadMeta{
-		Name: "test-name",
+	var meta = score.WorkloadMetadata{
+		"name": "test-name",
 	}
 
-	var resources = score.ResourcesSpecs{
-		"env": score.ResourceSpec{
+	var resources = score.WorkloadResources{
+		"env": score.Resource{
 			Type: "environment",
 		},
-		"db": score.ResourceSpec{
+		"db": score.Resource{
 			Type: "postgres",
 		},
-		"dns": score.ResourceSpec{
+		"dns": score.Resource{
 			Type: "dns",
 		},
-		"service-a": score.ResourceSpec{
+		"service-a": score.Resource{
 			Type: "service",
 		},
-		"shared-res": score.ResourceSpec{
+		"shared-res": score.Resource{
 			Type: "s3",
-			Metadata: score.ResourceMeta{
-				Annotations: map[string]string{
+			Metadata: score.ResourceMetadata{
+				"annotations": map[string]interface{}{
 					AnnotationLabelResourceId: "shared.main-s3",
 				},
 			},
 		},
-		"shared-res-admin": score.ResourceSpec{
+		"shared-res-admin": score.Resource{
 			Type:  "s3",
-			Class: "admin",
-			Metadata: score.ResourceMeta{
-				Annotations: map[string]string{
+			Class: Ref("admin"),
+			Metadata: score.ResourceMetadata{
+				"annotations": map[string]interface{}{
 					AnnotationLabelResourceId: "shared.main-s3",
 				},
 			},
@@ -173,21 +173,21 @@ func TestSubstitute(t *testing.T) {
 }
 
 func TestSubstituteAll(t *testing.T) {
-	var meta = score.WorkloadMeta{
-		Name: "test-name",
+	var meta = score.WorkloadMetadata{
+		"name": "test-name",
 	}
 
-	var resources = score.ResourcesSpecs{
-		"env": score.ResourceSpec{
+	var resources = score.WorkloadResources{
+		"env": score.Resource{
 			Type: "environment",
 		},
-		"db": score.ResourceSpec{
+		"db": score.Resource{
 			Type: "postgres",
 		},
-		"dns": score.ResourceSpec{
+		"dns": score.Resource{
 			Type: "dns",
 		},
-		"service-a": score.ResourceSpec{
+		"service-a": score.Resource{
 			Type: "service",
 		},
 	}

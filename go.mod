@@ -1,12 +1,14 @@
 module github.com/score-spec/score-humanitec
 
-go 1.19
+go 1.22
+
+toolchain go1.22.0
 
 require (
 	github.com/golang/mock v1.6.0
 	github.com/imdario/mergo v0.3.13
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/score-spec/score-go v0.0.0-20231024094556-308a07ae2536
+	github.com/score-spec/score-go v1.1.0
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/spf13/cobra v1.6.0
 	github.com/stretchr/testify v1.8.1

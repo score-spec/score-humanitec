@@ -16,6 +16,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	score "github.com/score-spec/score-go/types"
+
 	extensions "github.com/score-spec/score-humanitec/internal/humanitec/extensions"
 )
 
@@ -26,12 +27,12 @@ var (
 // templatesContext ia an utility type that provides a context for '${...}' templates substitution
 type templatesContext struct {
 	meta       map[string]interface{}
-	resources  score.ResourcesSpecs
+	resources  score.WorkloadResources
 	extensions extensions.HumanitecResourcesSpecs
 }
 
 // buildContext initializes a new templatesContext instance
-func buildContext(metadata score.WorkloadMeta, resources score.ResourcesSpecs, ext extensions.HumanitecResourcesSpecs) (*templatesContext, error) {
+func buildContext(metadata score.WorkloadMetadata, resources score.WorkloadResources, ext extensions.HumanitecResourcesSpecs) (*templatesContext, error) {
 	var metadataMap = make(map[string]interface{})
 	if decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName: "json",
@@ -141,7 +142,8 @@ func (ctx *templatesContext) mapVar(ref string) string {
 					if res.Type == "workload" {
 						log.Println("Warning: 'workload' is a reserved resource type. Its usage may lead to compatibility issues with future releases of this application.")
 					}
-					resId, hasAnnotation := res.Metadata.Annotations[AnnotationLabelResourceId]
+					resAnnotations, _ := res.Metadata["annotations"].(map[string]interface{})
+					resId, hasAnnotation := resAnnotations[AnnotationLabelResourceId].(string)
 					// DEPRECATED: Should use resource annotations instead
 					if resExt, hasMeta := ctx.extensions[resName]; hasMeta && !hasAnnotation {
 						if resExt.Scope == "" || resExt.Scope == "external" {
@@ -152,8 +154,8 @@ func (ctx *templatesContext) mapVar(ref string) string {
 					}
 					// END (DEPRECATED)
 
-					if hasAnnotation && strings.HasPrefix(resId, "shared.") && (res.Class != "" && res.Class != "default") {
-						resId = resId + "-class-" + res.Class
+					if hasAnnotation && strings.HasPrefix(resId, "shared.") && (res.Class != nil && *res.Class != "" && *res.Class != "default") {
+						resId = resId + "-class-" + *res.Class
 					}
 
 					if resId != "" {
